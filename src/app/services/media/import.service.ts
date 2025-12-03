@@ -90,19 +90,19 @@ export class UploadService {
   }
 
   private performUpload(params: UploadParams): void {
-    console.log('UploadService: Connecting to WebSocket:', this.wsUploadUrl);
+    console.log('ImportService: Connecting to WebSocket:', this.wsUploadUrl);
 
     const wsSubject: WebSocketSubject<any> = webSocket({
       url: this.wsUploadUrl,
       serializer: (msg: any) => msg,
       openObserver: {
         next: () => {
-          console.log('UploadService: WebSocket connection opened');
+          console.log('Import service: Websocket connection opened');
         }
       },
       closeObserver: {
         next: () => {
-          console.log('UploadService: WebSocket connection closed');
+          console.log('Import service: WebSocket connection closed');
         }
       }
     });
@@ -110,25 +110,28 @@ export class UploadService {
     let status: any;
     const md5 = CryptoJS.algo.MD5.create();
     const file = params.file;
-
     const reader = new FileReader();
     const chunksize = params.chunksize;
     let sliceStart = 0;
     const end = file.size;
     let finished = false;
-    const errorMessages: any[] = [];
 
-    const filedata = {
+    //obtener tipo de archivo para logging
+    const fileType = this.getFileTypeFromExtension(file.name);
+    console.log('Import service: Uploading file type: ', fileType);
+
+    const fileData = {
       action: 'upload',
       value: {
         name: file.name,
-        size: file.size
+        size: file.size,
+        type: fileType
       }
     };
 
     reader.onload = (event) => {
-      if (event.target?.result) {
-        console.log('UploadService: Sending chunk, size:', (event.target.result as ArrayBuffer).byteLength);
+      if (event.target?.result){
+        console.log('Import Service: Sending chunk, size: ', (event.target.result as ArrayBuffer).byteLength);
         wsSubject.next(event.target.result);
         md5.update(CryptoJS.lib.WordArray.create(event.target.result as ArrayBuffer));
       }
@@ -136,57 +139,55 @@ export class UploadService {
 
     wsSubject.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (msg) => {
-        console.log('UploadService: Received message from server:', msg);
+        console.log('Import service: Received message from  server: ', msg);
         status = msg;
 
-        if (status.type === 'file_save') {
-          console.log('UploadService: file_save response received on upload websocket (should not happen)');
+        if (status.type === 'file_save') { //modificar 'file_save' para el status.type
+          console.log('Import Service: file_save response received on upload webSocket (should not happen)');
           return;
         }
 
         if (finished && (status.success || status.complete)) {
-          console.log('UploadService: Upload websocket confirmed finished signal');
+          console.log('Import Service: Upload websocket confirmed finished signal');
           wsSubject.complete();
           return;
         }
 
         if (status.close) {
-          console.log('UploadService: Server sent close signal');
+          console.log('Import Service: Server sent close signal');
           wsSubject.complete();
           return;
         }
 
         if (status.error || status.type === 'error') {
           const errorMsg = status.error || status.value || 'Error durante la subida';
-          console.error('UploadService: Server error:', errorMsg);
+          console.error('Import Service: Server error:', errorMsg);
           if (params.onError) {
             params.onError(errorMsg);
           }
-          errorMessages.push(status);
-          if (status.fatal) {
-            wsSubject.complete();
-          }
+          wsSubject.complete();
           return;
         }
 
         if (!status.ready) {
-          console.log('UploadService: Server not ready, message type:', status.type || 'unknown', 'content:', status);
+          console.log('Import Service: Server not ready, message type:', status.type || 'unknown');
           return;
         }
 
-        console.log('UploadService: Server ready for next chunk');
+        console.log('ImportService: Server ready for next chunk');
 
-        // Upload finished, send 'finished' to the upload websocket
+        //el upload ha terminado, enviar 'finished' al websocket upload
         if (finished) {
           const hash = md5.finalize();
           const hashHex = hash.toString(CryptoJS.enc.Hex);
 
-          console.log('UploadService: Upload finished, sending finished signal with hash:', hashHex);
+          console.log('Import Service: Upload finished, sending finished signal with hash:', hashHex);
+          console.log('Import Service: File type completed:', fileType);
 
-          // Send action 'finished' to the upload websocket
+          //enviar action 'finished' al websocket upload
           wsSubject.next(JSON.stringify({ action: 'finished', value: hashHex }));
-          console.log('UploadService: Sent finished signal to upload websocket');
-          console.log('UploadService: Archivo cargado correctamente');
+          console.log('Import Service: Sent finished signal to upload websocket');
+          console.log('Import Service: Archivo cargado correctamente');
 
           if (params.onSuccess) {
             params.onSuccess('file-uploaded-' + hashHex);
@@ -196,42 +197,32 @@ export class UploadService {
           return;
         }
 
-        //The server is ready for the next chunk
+        //el servidor está listo para el sigiente chunk
         let sliceEnd = sliceStart + (status.chunksize || chunksize);
         if (sliceEnd >= end) {
           sliceEnd = end;
           finished = true;
         }
 
-        console.log(`UploadService: Reading chunk ${sliceStart}-${sliceEnd} of ${end}`);
+        console.log(`Import Service: Reading chunk ${sliceStart}-${sliceEnd} of ${end}`);
         const chunk = file.slice(sliceStart, sliceEnd);
         reader.readAsArrayBuffer(chunk);
-
-        const progress = Math.round((sliceStart * 100) / end);
-        if (params.onProgress) {
-          params.onProgress(progress);
-        }
 
         sliceStart = sliceEnd;
       },
       error: (err) => {
-        console.error('Upload WebSocket error:', err);
-
-        if (errorMessages.length === 0) {
-          errorMessages[0] = {
-            error: 'Error de conexión durante la subida'
-          };
-        }
-
+        console.error('Import Service: WebSocket error:', err);
         if (params.onError) {
-          params.onError(errorMessages[0].error);
+          params.onError('Conexion error during the upload');
         }
+      },
+      complete: () => {
+        console.log('Import Service: WebSocket subscription completed');
       }
     });
-
-    // Start uploading sending the file data
-    console.log('UploadService: Sending initial file data');
-    wsSubject.next(JSON.stringify(filedata));
+    // Empezar el upload con la información del archivo
+    console.log('Import Service: Sending initial file data');
+    wsSubject.next(JSON.stringify(fileData));
   }
 
   private getFileTypeFromExtension(filename: string): string {
@@ -240,6 +231,7 @@ export class UploadService {
     const audioExtensions = ['mp3', 'wav', 'aac', 'ogg', 'flac', 'm4a'];
     const videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm'];
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+    const zipExtension = ['zip'];
 
     if (audioExtensions.includes(extension)) {
       return 'AUDIO';
@@ -247,6 +239,8 @@ export class UploadService {
       return 'VIDEO';
     } else if (imageExtensions.includes(extension)) {
       return 'IMAGE';
+    } else if (zipExtension.includes(extension)) {
+      return 'PROJECT';
     } else {
       return 'FILE';
     }
