@@ -1,4 +1,4 @@
-import { Component, inject, DestroyRef, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, DestroyRef, effect, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AppPageHeaderComponent } from '../../layout/app-page-header/app-page-header.component';
@@ -6,6 +6,7 @@ import { ProjectsService, ProjectList } from '../../../services/projects/project
 import { ConfirmationDialogComponent } from '../../ui/confirmation-dialog/confirmation-dialog.component';
 import { Subscription } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { ImportService, UploadParams } from '../../../services/media/import.service';
 
 @Component({
   selector: 'app-project-list',
@@ -14,6 +15,10 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './project-list.component.html'
 })
 export class ProjectListComponent implements OnInit, OnDestroy {
+  private importService = inject(ImportService); //import service
+
+  isUploadingToProject: string | null = null;
+
   public projectsService = inject(ProjectsService);
   private destroyRef = inject(DestroyRef);
   private router = inject(Router);
@@ -26,16 +31,19 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   isConfirmDeleteOpen = false;
   isConfirmBulkDeleteOpen = false;
   isBulkDeleting = false;
-  
+
   private deletingProjects = new Map<string, boolean>();
-  
+
+  @ViewChild('importFileInput') importFileInput!: ElementRef<HTMLInputElement>;
+
+
   constructor() {
     this.refreshProjects();
 
     effect(() => {
       const projects = this.projectsService.projects();
       this.isLoading = false;
-      
+
       this.cleanupProjectMaps(projects);
     });
   }
@@ -44,13 +52,13 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     this.subscription.add(
       this.projectsService.errorEvent.subscribe(error => {
         console.log('Error event received:', error);
-        
+
         if (error.action === 'project_delete') {
           if (this.projectToDeleteUuid) {
             this.deletingProjects.delete(this.projectToDeleteUuid);
             this.projectToDeleteUuid = null;
           }
-          
+
           this.isBulkDeleting = false;
         }
       })
@@ -63,16 +71,16 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   cleanupProjectMaps(projects: ProjectList[]) {
     const existingUuids = projects.map(p => p.uuid);
-    
+
     if (this.selectedProjects.length > 0) {
       const previousLength = this.selectedProjects.length;
       this.selectedProjects = this.selectedProjects.filter(uuid => existingUuids.includes(uuid));
-      
+
       if (previousLength !== this.selectedProjects.length) {
         console.log(`Removed ${previousLength - this.selectedProjects.length} non-existent projects from selection`);
       }
     }
-    
+
     if (this.deletingProjects.size > 0) {
       let removed = 0;
       this.deletingProjects.forEach((value, uuid) => {
@@ -81,7 +89,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
           removed++;
         }
       });
-      
+
       if (this.deletingProjects.size === 0) {
         this.isBulkDeleting = false;
       }
@@ -122,7 +130,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
       this.executeProjectDeletion(this.projectToDeleteUuid);
       this.closeDeleteConfirmation();
-      
+
       const uuidToCleanup = this.projectToDeleteUuid;
       setTimeout(() => {
         if (this.deletingProjects.has(uuidToCleanup)) {
@@ -141,7 +149,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     if (this.isProjectBeingDeleted(uuid)) {
       return;
     }
-    
+
     this.openDeleteConfirmation(uuid);
   }
 
@@ -153,7 +161,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     if (this.isProjectBeingDeleted(uuid)) {
       return;
     }
-    
+
     if (this.selectedProjects.includes(uuid)) {
       this.selectedProjects = this.selectedProjects.filter(id => id !== uuid);
     } else {
@@ -168,7 +176,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
       this.selectedProjects = this.getSelectableProjects();
     }
   }
-  
+
   getSelectableProjects(): string[] {
     return this.projectsService.projects()
       .filter(project => !this.isProjectBeingDeleted(project.uuid))
@@ -181,16 +189,16 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   deleteSelectedProjects(): void {
     if (this.selectedProjects.length === 0) return;
-    
-    const validSelectedProjects = this.selectedProjects.filter(uuid => 
-      !this.isProjectBeingDeleted(uuid) && 
+
+    const validSelectedProjects = this.selectedProjects.filter(uuid =>
+      !this.isProjectBeingDeleted(uuid) &&
       this.projectsService.projects().some(p => p.uuid === uuid)
     );
-    
+
     this.selectedProjects = validSelectedProjects;
-    
+
     if (this.selectedProjects.length === 0) return;
-    
+
     this.isConfirmBulkDeleteOpen = true;
   }
 
@@ -199,39 +207,90 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   }
 
   confirmBulkDelete(): void {
-    const validSelectedProjects = this.selectedProjects.filter(uuid => 
-      !this.isProjectBeingDeleted(uuid) && 
+    const validSelectedProjects = this.selectedProjects.filter(uuid =>
+      !this.isProjectBeingDeleted(uuid) &&
       this.projectsService.projects().some(p => p.uuid === uuid)
     );
-    
+
     if (validSelectedProjects.length > 0) {
       this.executeDeleteProjects([...validSelectedProjects]);
     }
-    
+
     this.closeBulkDeleteConfirmation();
   }
 
   executeDeleteProjects(uuids: string[]): void {
     if (uuids.length === 0) return;
-    
+
     this.isBulkDeleting = true;
-    
+
     uuids.forEach(uuid => {
       this.deletingProjects.set(uuid, true);
     });
-    
-    uuids.forEach(uuid => 
+
+    uuids.forEach(uuid =>
       this.projectsService.deleteProject(uuid)
     );
-    
+
     this.selectedProjects = [];
-    
+
     setTimeout(() => {
       uuids.forEach(uuid => {
         this.deletingProjects.delete(uuid);
       });
-      
+
       this.isBulkDeleting = false;
     }, 5000);
   }
+
+  //métodos para el import
+  // Método para abrir el selector de archivos
+openImportDialog(): void {
+  this.importFileInput.nativeElement.click();
+}
+
+// Método para manejar la selección de archivo
+onFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    const file = input.files[0];
+
+    // Verificar que sea un archivo .zip
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      alert('Solo se pueden importar archivos .zip');
+      return;
+    }
+
+    // Confirmar antes de importar
+    if (confirm(`¿Importar proyecto "${file.name}"?`)) {
+      this.importProject(file);
+    }
+
+    // Limpiar el input
+    input.value = '';
+  }
+}
+
+// Método para importar el proyecto
+importProject(file: File): void {
+  console.log('Importando proyecto:', file.name);
+
+  const uploadParams: UploadParams = {
+    file: file,
+    chunksize: 1024 * 1024, // 1MB chunks
+    onSuccess: (fileUuid: string) => {
+      console.log('Proyecto importado con UUID:', fileUuid);
+      // Recargar la lista después de un tiempo
+      setTimeout(() => {
+        this.refreshProjects();
+      }, 2000);
+    },
+    onError: (error: any) => {
+      console.error('Error al importar:', error);
+      alert('Error al importar proyecto: ' + error);
+    }
+  };
+
+  this.importService.uploadFile(uploadParams);
+}
 }

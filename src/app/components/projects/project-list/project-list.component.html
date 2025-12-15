@@ -28,7 +28,13 @@
       </div>
     </div>
     <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-      <button type="button" (click)="createNewProject()" class="btn btn-primary btn-normal">{{ 'project.list.new.project' | translate }}</button>
+      <button type="button" (click)="createNewProject()" class="btn btn-primary btn-normal">
+        {{ 'project.list.new.project' | translate }}
+      </button>
+        <!-- Botón de importar -->
+      <button type="button" (click)="openImportDialog()" class="btn btn-secondary btn-normal">
+        Import
+      </button>
     </div>
   </div>
 
@@ -125,4 +131,5 @@
   (confirm)="confirmBulkDelete()"
 ></app-confirmation-dialog>
 
+<input #importFileInput type="file" accept=".zip" hidden (change)="onFileSelected($event)">
 

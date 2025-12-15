@@ -16,7 +16,7 @@ export interface UploadParams {
   providedIn: 'root'
 })
 
-export class UploadService {
+export class ImportService {
   private destroyRef = inject(DestroyRef);
 
   private wsUploadUrl = `${AppConfig.websocketBaseUrl}/upload`;
@@ -35,6 +35,11 @@ export class UploadService {
 
     //Marcar que se está subiendo un archivo
     this.isUploading.set(true);
+
+    //determinar el tipo de archivo
+    const fileType = this.getFileTypeFromExtension(params.file.name);
+    console.log('Import Service: File type detected:', fileType);
+
 
     const performUploadWcallbacks = () => {
       const fileId = this.generateTempId(params.file);
