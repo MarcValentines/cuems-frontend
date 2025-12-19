@@ -84,6 +84,11 @@
               <td class="px-3 py-4 text-sm whitespace-nowrap">{{ project.created | date:'medium' }}</td>
               <td class="px-3 py-4 text-sm whitespace-nowrap">{{ project.modified | date:'medium' }}</td>
               <td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
+                <!-- Exportar proyectos-->
+                <a *ngIf="!isProjectBeingDeleted(project.uuid)" [routerLink]="['/projects', project.uuid]" (click)="$event.stopPropagation()" class="mr-4">
+                  {{ 'project.list.export' | translate }}<span class="sr-only">, {{ project.name }}</span>
+                </a>
+
                 <a *ngIf="!isProjectBeingDeleted(project.uuid)" [routerLink]="['/projects', project.uuid, 'edit']" (click)="$event.stopPropagation()" class="mr-4">
                   {{ 'project.list.edit' | translate }}<span class="sr-only">, {{ project.name }}</span>
                 </a>
