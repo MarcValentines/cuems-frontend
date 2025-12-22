@@ -7,6 +7,8 @@ import { ConfirmationDialogComponent } from '../../ui/confirmation-dialog/confir
 import { Subscription } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImportService, UploadParams } from '../../../services/media/import.service';
+import { ExportService, ExportParams } from '../../../services/media/export.service';
+
 
 @Component({
   selector: 'app-project-list',
@@ -16,6 +18,9 @@ import { ImportService, UploadParams } from '../../../services/media/import.serv
 })
 export class ProjectListComponent implements OnInit, OnDestroy {
   private importService = inject(ImportService); //import service
+  private exportService = inject(ExportService);
+  exportMessages = new Map<string, string>(); //trackear exportaciones
+  exportingProjects = new Set<string>(); // Para trackear qué proyectos se están exportando
 
   isUploadingToProject: string | null = null;
 
@@ -63,7 +68,24 @@ export class ProjectListComponent implements OnInit, OnDestroy {
         }
       })
     );
+    this.setupExportSubscriptions();
+
   }
+
+  private setupExportSubscriptions(): void {
+  // Suscribirse a eventos del ExportService
+  this.subscription.add(
+    this.exportService.exportComplete.subscribe(event => {
+      // Manejar exportación completada
+    })
+  );
+
+  this.subscription.add(
+    this.exportService.exportError.subscribe(event => {
+      // Manejar error de exportación
+    })
+  );
+}
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
@@ -292,5 +314,39 @@ importProject(file: File): void {
   };
 
   this.importService.uploadFile(uploadParams);
+}
+
+importToProject(projectUuid: string): void {
+  if (this.isProjectBeingDeleted(projectUuid)) {
+    return;
+  }
+
+  this.isUploadingToProject = projectUuid;
+  this.importFileInput.nativeElement.click();
+}
+
+// Métodos para exportar
+exportProject(projectUuid: string): void {
+  // Lógica de exportación usando ExportService
+  const params: ExportParams = {
+    projectUuid: projectUuid,
+    format: 'zip',
+    onSuccess: (fileUrl) => { /* callback éxito */ },
+    onError: (error) => { /* callback error */ }
+  };
+
+  this.exportService.exportProject(params); // <-- OBLIGATORIO
+}
+
+private getProjectByUuid(uuid: string): ProjectList | undefined {
+  return this.projectsService.projects().find(p => p.uuid === uuid);
+}
+
+isProjectExporting(uuid: string): boolean {
+  return this.exportingProjects.has(uuid);
+}
+
+getExportMessage(uuid: string): string {
+  return this.exportMessages.get(uuid) || '';
 }
 }
