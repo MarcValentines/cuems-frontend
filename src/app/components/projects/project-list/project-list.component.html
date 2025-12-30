@@ -27,13 +27,13 @@
         </a>
       </div>
     </div>
-    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex gap-3">
       <button type="button" (click)="createNewProject()" class="btn btn-primary btn-normal">
         {{ 'project.list.new.project' | translate }}
       </button>
         <!-- Botón de importar -->
       <button type="button" (click)="openImportDialog()" class="btn btn-secondary btn-normal">
-        Import
+        {{'Importar' | translate}}
       </button>
     </div>
   </div>
@@ -88,7 +88,7 @@
                 <button *ngIf="!isProjectBeingDeleted(project.uuid)"
                   (click)="$event.stopPropagation(); exportProject(project.uuid)"
                   class="mr-4 text-primary hover:text-primary-light"
-                  [disabled]="isProjectBeingDeleted(project.uuid) || isProjectExporting(project.uuid)">
+                  [disabled]="isProjectExporting(project.uuid)">
                   <span *ngIf="isProjectExporting(project.uuid)"
                     class="loading loading-spinner loading-xs mr-1"></span>
                     {{ 'exportar' | translate }}

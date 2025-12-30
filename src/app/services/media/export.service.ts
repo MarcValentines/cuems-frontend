@@ -41,17 +41,18 @@ export class ExportService {
   private sendMessageToWebSocket(message: any): void {
     const messageStr = JSON.stringify(message);
 
+    /* DEBUG: Ver qué tiene realmente el WebSocketService
+    console.log('DEBUG WebSocketService:', this.webSocketService);
+    console.log('DEBUG métodos disponibles:',
+      Object.getOwnPropertyNames(Object.getPrototypeOf(this.webSocketService))
+    );
+    console.log('DEBUG propiedades:', Object.keys(this.webSocketService));
+    */
+
     // Intentar diferentes métodos comunes
-    if (typeof (this.webSocketService as any).send === 'function') {
-      (this.webSocketService as any).send(messageStr);
-    }
-    else if (typeof (this.webSocketService as any).sendMessage === 'function') {
-      (this.webSocketService as any).sendMessage(messageStr);
-    }
-    else if (typeof (this.webSocketService as any).next === 'function') {
-      (this.webSocketService as any).next(messageStr);
-    }
-    else {
+    if (typeof (this.webSocketService as any).wsEmit === 'function') {
+      (this.webSocketService as any).wsEmit(messageStr);
+    } else {
       console.error('ExportService: No se encontró método para enviar mensajes al WebSocket');
       throw new Error('WebSocketService no tiene método para enviar mensajes');
     }
