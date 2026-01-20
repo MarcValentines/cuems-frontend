@@ -33,7 +33,7 @@
       </button>
         <!-- Botón de importar -->
       <button type="button" (click)="openImportDialog()" class="btn btn-secondary btn-normal">
-        {{'Importar' | translate}}
+        {{'project.import' | translate}}
       </button>
     </div>
   </div>
@@ -91,7 +91,7 @@
                   [disabled]="isProjectExporting(project.uuid)">
                   <span *ngIf="isProjectExporting(project.uuid)"
                     class="loading loading-spinner loading-xs mr-1"></span>
-                    {{ 'exportar' | translate }}
+                    {{ 'project.export' | translate }}
                 </button>
 
                 <a *ngIf="!isProjectBeingDeleted(project.uuid)" [routerLink]="['/projects', project.uuid, 'edit']" (click)="$event.stopPropagation()" class="mr-4">

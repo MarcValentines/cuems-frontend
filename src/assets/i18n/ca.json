@@ -63,6 +63,8 @@
     "project.button.effects": "Effects",
     "project.unsaved.changes": "Canvis no desats",
     "project.edit": "Editar",
+    "project.export": "Exportar",
+    "project.import": "Importar",
     "project.show": "Show",
     "project.edit.editing": "Editant projecte",
     "project.edit.save.changes": "Desar canvis",

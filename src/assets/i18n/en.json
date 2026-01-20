@@ -63,6 +63,8 @@
     "project.button.effects": "Effects",
     "project.unsaved.changes": "Unsaved changes",
     "project.edit": "Edit",
+    "project.export": "Export",
+    "project.import": "Import",
     "project.show": "Show",
     "project.edit.editing": "Editing project",
     "project.edit.save.changes": "Save changes",
@@ -212,6 +214,6 @@
     "nodes.settings.no.nodes.configured": "No nodes configured",
     "nodes.settings.no.outputs.configured": "No outputs configured for this node",
     "footer.powered.text": "Powered",
-    "footer.promoted.text": "Promoted", 
+    "footer.promoted.text": "Promoted",
     "footer.financed.text": "Financed"
 }
