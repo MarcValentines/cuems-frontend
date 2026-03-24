@@ -26,9 +26,8 @@ export class ExportService {
     console.log('ExportService: Exporting project:', params.projectUuid);
 
     const message = {
-      action: 'project_export',
-      value: params.projectUuid,
-      format: params.format || 'zip'
+      "action": 'project_export',
+      "value": params.projectUuid,
     };
 
     // Intentar diferentes métodos para enviar mensajes
@@ -39,7 +38,6 @@ export class ExportService {
    * Intenta enviar mensaje usando diferentes métodos del WebSocketService
    */
   private sendMessageToWebSocket(message: any): void {
-    const messageStr = JSON.stringify(message);
 
     /* DEBUG: Ver qué tiene realmente el WebSocketService
     console.log('DEBUG WebSocketService:', this.webSocketService);
@@ -51,7 +49,7 @@ export class ExportService {
 
     // Intentar diferentes métodos comunes
     if (typeof (this.webSocketService as any).wsEmit === 'function') {
-      (this.webSocketService as any).wsEmit(messageStr);
+      (this.webSocketService as any).wsEmit(message);
     } else {
       console.error('ExportService: No se encontró método para enviar mensajes al WebSocket');
       throw new Error('WebSocketService no tiene método para enviar mensajes');
