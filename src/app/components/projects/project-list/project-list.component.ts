@@ -349,4 +349,11 @@ isProjectExporting(uuid: string): boolean {
 getExportMessage(uuid: string): string {
   return this.exportMessages.get(uuid) || '';
 }
+  //mostrar descripción de proyecto
+  truncateText(text: string, maxLength: number = 17): string {
+    if (!text) return '';
+    return text.length > maxLength
+      ? text.substring(0, maxLength) + '...'
+      : text;
+  }
 }

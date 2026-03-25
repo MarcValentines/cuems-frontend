@@ -118,6 +118,7 @@
     "project.list.no.projects.available.description": "Crea el teu primer projecte o fes click en actualitzar per carregar els projectes existents.",
     "project.list.new.project": "Nou projecte",
     "project.list.name": "Nom",
+    "project.list.description": "Descripció",
     "project.list.unix_name": "Unix_name",
     "project.list.created": "Creat",
     "project.list.modified": "Modificat",

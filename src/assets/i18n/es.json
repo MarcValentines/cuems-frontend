@@ -117,6 +117,7 @@
     "project.list.no.projects.available.description": "Crea tu primer proyecto o haz click en actualizar para cargar los proyectos existentes.",
     "project.list.new.project": "Nuevo proyecto",
     "project.list.name": "Nombre",
+    "project.list.description": "Descripción",
     "project.list.unix_name": "Unix_name",
     "project.list.created": "Creado",
     "project.list.modified": "Modificado",

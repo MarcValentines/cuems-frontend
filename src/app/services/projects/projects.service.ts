@@ -18,9 +18,11 @@ import {
 export interface ProjectList {
   uuid: string;
   name: string;
+  description?: string;
   unix_name: string;
   created: string;
   modified: string;
+  CuemsScript?: any; //define el comportamiento del proyecto
 }
 
 export type ProjectTemplate = Record<string, any>;
@@ -267,6 +269,7 @@ export class ProjectsService {
     }
 
     if (response && response.type === 'project_list' && Array.isArray(response.value)) {
+      console.log('BAckend project list: ', response.value); //debug para ver la lista de proyectos
       handleProjectListResponse(response.value, projects => this.projects.set(projects));
     }
 
@@ -331,6 +334,7 @@ export class ProjectsService {
     }
 
     if (response && response.type === 'project' && response.value) {
+      console.log('Backend project data received: ', response.value); //debug para ver que info llega del backend sobre el proyecto
       this.projectLoaded.emit(response.value);
     }
 

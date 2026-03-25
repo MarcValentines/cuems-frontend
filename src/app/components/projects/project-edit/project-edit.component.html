@@ -16,19 +16,47 @@
   <div class="flex flex-wrap flex-col gap-4 md:flex-row">
     <div class="flex flex-wrap flex-1 items-center gap-4 p-6 bg-dark-300 rounded-lg">
       <div class="flex-1 min-w-[240px]">
-        <p>{{ 'project.edit.editing' | translate }}: {{ project?.name }}</p>
+        <!--Editor de nombre y description (modificar a que la description sea traducible como el nombre de proyecto)-->
+        <div *ngIf="!isEditing">
+          <p><strong>{{'project.edit.editing' | translate}}: {{ project?.name }}</strong></p>
+          <p>{{ project?.description !== undefined && project?.description !== null ? project.description : 'No description' }}</p>
+
+        </div>
+
+        <div *ngIf="isEditing">
+          <label for="">{{'project.edit.editing' | translate}}</label>
+          <hr><br>
+          <input [(ngModel)]="editName" class="w-full mb-2 p-1 bg-dark-400">
+          <textarea [(ngModel)]="editDescription" class="w-full p-1 bg-dark-400" rows="2"></textarea>
+        </div>
+        <!--
+        <p class="flex">{{ 'project.edit.editing' | translate }}: {{ project?.name }}</p>
+        <p class="flex">{{'Description' | translate }}: {{project?.description}}</p>
+        Mapeo automático de la descripción:
+        <p>{{ project?.description ?? project?.CuemsScript?.description ?? ('No description' | translate) }}</p>
+        -->
       </div>
-  
+
       <div class="flex gap-4">
-        <button 
+        <button
           *ngIf="hasUnsavedChanges"
           class="btn btn-normal btn-primary gap-2"
           (click)="saveAllChanges()">
           <app-icon icon="upload" class="w-4 h-4"></app-icon>
           {{ 'project.edit.save.changes' | translate }}
         </button>
-        
-        <span class="btn btn-normal btn-primary">{{ 'project.edit' | translate }}</span>
+
+        <button *ngIf="!isEditing" class="btn btn-normal btn-primary" (click)="startEdit()">
+          {{ 'project.edit' | translate }}
+        </button>
+
+        <button *ngIf="isEditing" class="btn btn-normal btn-primary" (click)="saveEdit()">
+          {{'save' | translate}}
+        </button>
+        <button *ngIf="isEditing" class="btn btn-normal btn-muted ml-2" (click)="cancelEdit()">
+          {{'cancel' | translate}}
+        </button>
+
         <a [routerLink]="['/projects', project?.uuid]" class="btn btn-normal btn-muted">{{ 'project.show' | translate }}</a>
       </div>
     </div>
@@ -39,21 +67,21 @@
     </div>
     -->
     </div>
-  
+
   <!-- Tab routes -->
   <div class="mt-6 border-b border-dark-300">
     <div class="flex justify-between">
       <nav class="flex space-x-4">
         <a routerLink="sequence" routerLinkActive="bg-dark-300 text-white" class="px-4 py-2 text-sm font-medium rounded-t-lg">
           {{ 'project.sequence' | translate }}
-      </a>      
-      <a routerLink="audio-mixer" routerLinkActive="bg-dark-300 text-white" class="pointer-events-none text-muted px-4 py-2 text-sm font-medium rounded-t-lg">
-        {{ 'project.audio-mixer' | translate }}
-      </a>
-      <a routerLink="video-mixer" routerLinkActive="bg-dark-300 text-white" class="pointer-events-none text-muted px-4 py-2 text-sm font-medium rounded-t-lg">
-        {{ 'project.video-mixer' | translate }}
-      </a>
-      <a routerLink="dmx-mixer" routerLinkActive="bg-dark-300 text-white" class="px-4 py-2 text-sm font-medium rounded-t-lg">
+        </a>
+        <a routerLink="audio-mixer" routerLinkActive="bg-dark-300 text-white" class="pointer-events-none text-muted px-4 py-2 text-sm font-medium rounded-t-lg">
+          {{ 'project.audio-mixer' | translate }}
+        </a>
+        <a routerLink="video-mixer" routerLinkActive="bg-dark-300 text-white" class="pointer-events-none text-muted px-4 py-2 text-sm font-medium rounded-t-lg">
+          {{ 'project.video-mixer' | translate }}
+        </a>
+        <a routerLink="dmx-mixer" routerLinkActive="bg-dark-300 text-white" class="px-4 py-2 text-sm font-medium rounded-t-lg">
           {{ 'project.dmx-mixer' | translate }}
         </a>
       </nav>
@@ -68,7 +96,7 @@
           <app-icon icon="activity"></app-icon>
           <span>{{ 'project.button.activity' | translate }} / {{ 'project.button.warnings' | translate }}</span>
         </button>
-        
+
         <button class="btn btn-small btn-muted space-x-2">
           <app-icon icon="star"></app-icon>
           <span>{{ 'project.button.effects' | translate }}</span>
@@ -76,8 +104,8 @@
       </div>
     </div>
   </div>
-  
+
   <div class="mt-4">
     <router-outlet></router-outlet>
   </div>
-</div> 
+</div>
