@@ -1,8 +1,53 @@
-<div class="p-4">
-  <h2 class="text-xl font-bold mb-4">DMX Mixer</h2>
-  <div class="bg-white p-4 rounded-lg">
-    <div>
-      <iframe src="http://10.16.10.2:9090" width="100%" height="750px" style="min-height: 700px; border: none; background: white;"></iframe>
+<div class="p-6 h-full flex flex-col">
+
+  <!-- Vista de lista de nodos -->
+  <div *ngIf="!isViewingNode" class="flex flex-col h-full">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold text-white">DMX Mixer</h2>
+      <p class="text-sm text-gray-400 mt-1">{{'dmxmixer.ola.selectNode' | translate}}</p>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="nodeIds.length === 0" class="flex-1 flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-4xl mb-3 text-gray-500">○</div>
+        <p class="text-gray-400 text-lg">{{'dmxmixer.ola.noNodes' | translate}}</p>
+        <p class="text-gray-500 text-sm mt-2">{{'dmxmixer.ola.noNodes2' | translate}}</p>
+      </div>
     </div>
   </div>
-</div> 
+
+  <!-- Barra de pestañas -->
+  <div *ngIf="nodeIds.length > 0" class="flex flex-col flex-1 min-h-0">
+
+    <div class="flex gap-1 border-b border-dark-500 overflow-x-auto">
+      <button
+        *ngFor="let node of nodeIds"
+        (click)="navigateToNode(node.nodeId)"
+        class="px-4 py-2 rounded-t-lg border border-b-0 border-dark-500 whitespace-nowrap transition-colors"
+        [ngClass]="{
+          'bg-dark-500 text-white border-blue-500': selectedNodeId === node.nodeId,
+          'bg-dark-300 text-gray-140 hover:bg-dark-400': selectedNodeId !== node.nodeId
+        }">
+        {{ node.nodeId }}
+      </button>
+    </div>
+
+    <!-- Contenedor de iframes -->
+    <div class="bg-dark-300 rounded-b-lg border border-dark-500 overflow-hidden h-[calc(100vh-250px)]">
+
+      <div *ngFor="let node of nodeIds"
+           [hidden]="selectedNodeId !== node.nodeId"
+           class="w-full h-full flex">
+
+        <iframe
+          [src]="node.url"
+          class="w-full h-full border-none"
+          title="DMX Node Control Panel">
+        </iframe>
+
+      </div>
+
+    </div>
+  </div>
+</div>
