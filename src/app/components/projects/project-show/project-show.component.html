@@ -1,5 +1,5 @@
 <div class="wrapper">
-  <app-page-header icon="project" [title]="'Proyecto'">
+  <app-page-header icon="radio" [title]="project?.name">
     <div actions>
       <a class="flex items-center gap-2" routerLink="/projects">
         <app-icon icon="closeCircle" class="w-4 h-4"></app-icon>
@@ -10,48 +10,12 @@
 </div>
 
 <div class="wrapper">
-  <div class="flex flex-wrap flex-col gap-4 md:flex-row">
-    <div class="flex flex-wrap flex-1 items-center gap-4 p-6 bg-dark-300 rounded-lg">
-      <div class="flex-1 min-w-[240px]">
-        <p>{{ project?.name }}</p>
-      </div>
-  
-      <div class="flex gap-4">
-        <a [routerLink]="['/projects', projectUuid, 'edit']" class="btn btn-normal btn-muted">{{ 'project.edit' | translate }}</a>
-        <span class="btn btn-normal btn-primary">{{ 'project.show' | translate }}</span>
-      </div>
-    </div>
-
-    <div>
-      <button 
-        class="btn btn-large" 
-        [class.btn-secondary]="isProjectReady" 
-        [class.btn-muted]="!isProjectReady"
-        [disabled]="!isProjectReady"
-        (click)="go()">GO</button>
-    </div>
-  </div>
-
-  <div class="mt-4 p-3 bg-dark-300 rounded-lg">
-    <div *ngIf="isCheckingEngine" class="flex items-center gap-3">
-      <div class="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
-              <span class="text-sm font-medium">
-          Inicializando motor de reproducción <span class="after:content-[''] after:animate-[dots_2s_infinite]"></span>
-        </span>
-    </div>
-    
-    <div *ngIf="isProjectReady && !isCheckingEngine" class="flex items-center gap-3">
-      <div class="w-4 h-4 bg-secondary rounded-full"></div>
-      <span class="text-sm font-medium">Motor de reproducción listo</span>
-    </div>
-    
-    <div *ngIf="engineError && !isCheckingEngine">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-4 h-4 bg-tertiary rounded-full"></div>
-        <span class="text-sm font-medium">Error del motor de reproducción</span>
-      </div>
-      <p class="text-xs ml-7">{{ engineError }}</p>
-    </div>
+  <div class="mt-4">
+    <app-engine-status
+      [status]="engineStatus"
+      [engineError]="engineError"
+      [runningProject]="runningProject">
+    </app-engine-status>
   </div>
   
   <div class="mt-6 border-b border-dark-300">
@@ -67,7 +31,7 @@
         <a routerLink="video-mixer" routerLinkActive="bg-dark-300 text-white" class="px-4 py-2 text-sm font-medium rounded-t-lg">
           {{ 'project.video-mixer' | translate }}
         </a>
-        <a routerLink="dmx-mixer" routerLinkActive="bg-dark-300 text-white" class="pointer-events-none text-muted px-4 py-2 text-sm font-medium rounded-t-lg">
+        <a routerLink="dmx-mixer" routerLinkActive="bg-dark-300 text-white" class="px-4 py-2 text-sm font-medium rounded-t-lg">
             {{ 'project.dmx-mixer' | translate }}
           </a>
         </nav>
@@ -88,27 +52,6 @@
   </div>
 </div>
 
-
-
-<div *ngIf="isShowActiveSequence" class="fixed left-0 bottom-0 right-0 w-full bg-dark-300 px-4 py-6 flex items-center justify-center gap-4">
-  <div>
-    <button (click)="pause()" class="btn btn-small btn-muted">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
-      </svg>      
-    </button>
-  </div>
-  <div>
-    <button (click)="stop()" class="btn btn-small btn-muted">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
-      </svg>
-      
-    </button>
-  </div>
-  <div>
-    <button (click)="go()" class="btn btn-small btn-secondary">
-      GO
-    </button>
-  </div>
-</div>
+@if (isShowActiveSequence) {
+  <app-play-controls-floating />
+}

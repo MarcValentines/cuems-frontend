@@ -79,6 +79,8 @@
     --color-muted-light: #5E666D;
 
     --font-sans: 'Roboto', sans-serif;
+
+    --animate-marquee: marquee 12s linear infinite;
 }
 
 .wrapper {
@@ -200,4 +202,9 @@
   66.66% { content: '....'; }
   83.33% { content: '.....'; }
   100% { content: '......'; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }

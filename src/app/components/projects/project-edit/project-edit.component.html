@@ -1,41 +1,27 @@
 <div class="wrapper">
-  <app-page-header icon="project" [title]="'Editar Proyecto'">
-    <div actions>
-      <a class="flex items-center gap-2" routerLink="/projects">
-        <app-icon icon="closeCircle" class="w-4 h-4"></app-icon>
+  <app-page-header icon="pencil" [title]="project?.name">
+    <div class="flex items-center gap-4" actions>
+      <button 
+        *ngIf="hasUnsavedChanges"
+        class="btn btn-small btn-tertiary gap-2"
+        (click)="saveAllChanges()">
+        <app-icon icon="upload" class="w-[12px] h-[12px]"></app-icon>
+        {{ 'project.edit.save.changes' | translate }}
+      </button>
+
+      <a [routerLink]="['/projects', project?.uuid]" class="btn btn-small btn-secondary">{{ 'project.show' | translate }}</a>
+      <button
+        type="button"
+        class="flex items-center gap-2 cursor-pointer"
+        (click)="closeWorkspaceProject()">
         <span class="text-sm">{{ 'close' | translate }} {{ 'project' | translate }}</span>
-      </a>
+        <app-icon icon="closeCircle" class="w-4 h-4"></app-icon>
+      </button>
     </div>
   </app-page-header>
 </div>
 
 <div class="wrapper">
-  <div class="flex flex-wrap flex-col gap-4 md:flex-row">
-    <div class="flex flex-wrap flex-1 items-center gap-4 p-6 bg-dark-300 rounded-lg">
-      <div class="flex-1 min-w-[240px]">
-        <p>{{ 'project.edit.editing' | translate }}: {{ project?.name }}</p>
-      </div>
-  
-      <div class="flex gap-4">
-        <button 
-          *ngIf="hasUnsavedChanges"
-          class="btn btn-normal btn-primary gap-2"
-          (click)="saveAllChanges()">
-          <app-icon icon="upload" class="w-4 h-4"></app-icon>
-          {{ 'project.edit.save.changes' | translate }}
-        </button>
-        
-        <span class="btn btn-normal btn-primary">{{ 'project.edit' | translate }}</span>
-        <a [routerLink]="['/projects', project?.uuid]" class="btn btn-normal btn-muted">{{ 'project.show' | translate }}</a>
-      </div>
-    </div>
-
-    <!--
-    <div>
-      <button class="btn btn-large btn-muted" disabled>GO</button>
-    </div>
-    -->
-    </div>
   
   <!-- Tab routes -->
   <div class="mt-6 border-b border-dark-300">

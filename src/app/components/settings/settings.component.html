@@ -14,54 +14,133 @@
     </div>
 
     <div *ngIf="mappings && mappings.value && mappings.value.nodes" class="space-y-6">
-      <div *ngFor="let nodeWrapper of mappings.value.nodes; let i = index" 
-           class="bg-dark-300 rounded-lg p-6">
-        
-        <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
-          <app-icon icon="node" class="text-primary"></app-icon>
-          {{ getNodeName(i) }}
-        </h3>
-        
-        <div *ngIf="getVideoOutputs(nodeWrapper.node).length > 0" class="mb-6">
-          <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
-            <app-icon icon="video" class="w-[12px] h-[12px]"></app-icon>
-            {{ 'nodes.settings.videoOutputs' | translate }}
-          </h4>
-          <div class="ml-5 space-y-2">
-            <div *ngFor="let output of getVideoOutputs(nodeWrapper.node); let videoIndex = index" 
-                 class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
-              <span class="text-sm">
-                {{ 'nodes.settings.videoOutput' | translate }} {{ formatNumber(videoIndex) }}:
-              </span>
-              <span class="text-sm font-medium text-white">
-                {{ getMappedName(output) }}
-              </span>
+      <div *ngIf="activeNodes.length > 0">
+          <p class="text-lg font-semibold mb-4">
+            Nodos Activos ({{ activeNodes.length }})
+          </p>
+
+          <div *ngFor="let nodeWrapper of activeNodes; let i = index" 
+              class="bg-dark-300 rounded-lg p-6 mb-8">
+         
+            <div class="flex items-start justify-between gap-4">
+              <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
+                <app-icon icon="node" class="text-primary"></app-icon>
+                {{ getNodeName(i) }}
+              </h3>
+  
+              <div>
+                <button (click)="openAddNodeConfirmation(nodeWrapper.node.uuid)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-minus-icon lucide-circle-minus"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>  
+                </button>
+              </div>
+            </div>             
+
+          <div *ngIf="getVideoOutputs(nodeWrapper.node).length > 0" class="mb-6">
+            <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
+              <app-icon icon="video" class="w-[12px] h-[12px]"></app-icon>
+              {{ 'nodes.settings.videoOutputs' | translate }}
+            </h4>
+            <div class="ml-5 space-y-2">
+              <div *ngFor="let output of getVideoOutputs(nodeWrapper.node); let videoIndex = index" 
+                  class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
+                <span class="text-sm">
+                  {{ 'nodes.settings.videoOutput' | translate }} {{ formatNumber(videoIndex) }}:
+                </span>
+                <span class="text-sm font-medium text-white">
+                  {{ getMappedName(output) }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div *ngIf="getAudioOutputs(nodeWrapper.node).length > 0">
-          <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
-            <app-icon icon="audio" class="w-[12px] h-[12px]"></app-icon>
-            {{ 'nodes.settings.audioOutputs' | translate }}
-          </h4>
-          <div class="ml-5 space-y-2">
-            <div *ngFor="let output of getAudioOutputs(nodeWrapper.node); let audioIndex = index" 
-                 class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
-              <span class="text-sm">
-                {{ 'nodes.settings.audioOutput' | translate }} {{ formatNumber(audioIndex) }}:
-              </span>
-              <span class="text-sm font-medium text-white">
-                {{ getMappedName(output) }}
-              </span>
+          <div *ngIf="getAudioOutputs(nodeWrapper.node).length > 0">
+            <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
+              <app-icon icon="audio" class="w-[12px] h-[12px]"></app-icon>
+              {{ 'nodes.settings.audioOutputs' | translate }}
+            </h4>
+            <div class="ml-5 space-y-2">
+              <div *ngFor="let output of getAudioOutputs(nodeWrapper.node); let audioIndex = index" 
+                  class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
+                <span class="text-sm">
+                  {{ 'nodes.settings.audioOutput' | translate }} {{ formatNumber(audioIndex) }}:
+                </span>
+                <span class="text-sm font-medium text-white">
+                  {{ getMappedName(output) }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div *ngIf="getVideoOutputs(nodeWrapper.node).length === 0 && getAudioOutputs(nodeWrapper.node).length === 0" 
-             class="text-gray-400 text-sm">
-            {{ 'nodes.settings.no.outputs.configured' | translate }}
+          <div *ngIf="getVideoOutputs(nodeWrapper.node).length === 0 && getAudioOutputs(nodeWrapper.node).length === 0" 
+              class="text-gray-400 text-sm">
+              {{ 'nodes.settings.no.outputs.configured' | translate }}
+          </div>
         </div>
+      </div>
+
+
+      <div *ngIf="newNodes.length > 0">
+        <p class="text-lg font-semibold mb-4">
+          Nodos Nuevos ({{ newNodes.length }})
+        </p>
+
+        <div *ngFor="let nodeWrapper of newNodes; let i = index" 
+            class="bg-dark-300 rounded-lg p-6 mb-8">
+          
+          <div class="flex items-start justify-between gap-4">
+            <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
+              <app-icon icon="node" class="text-primary"></app-icon>
+              {{ getNodeName(i) }}
+            </h3>
+
+            <div>
+              <button (click)="openRemoveNodeConfirmation(nodeWrapper.node.uuid)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-plus-icon lucide-circle-plus"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="getVideoOutputs(nodeWrapper.node).length > 0" class="mb-6">
+            <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
+              <app-icon icon="video" class="w-[12px] h-[12px]"></app-icon>
+              {{ 'nodes.settings.videoOutputs' | translate }}
+            </h4>
+            <div class="ml-5 space-y-2">
+              <div *ngFor="let output of getVideoOutputs(nodeWrapper.node); let videoIndex = index" 
+                  class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
+                <span class="text-sm">
+                  {{ 'nodes.settings.videoOutput' | translate }} {{ formatNumber(videoIndex) }}:
+                </span>
+                <span class="text-sm font-medium text-white">
+                  {{ getMappedName(output) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="getAudioOutputs(nodeWrapper.node).length > 0">
+            <h4 class="text-sm font-medium mb-3 flex items-center gap-2">
+              <app-icon icon="audio" class="w-[12px] h-[12px]"></app-icon>
+              {{ 'nodes.settings.audioOutputs' | translate }}
+            </h4>
+            <div class="ml-5 space-y-2">
+              <div *ngFor="let output of getAudioOutputs(nodeWrapper.node); let audioIndex = index" 
+                  class="flex items-center gap-3 py-2 px-3 bg-dark-200 rounded">
+                <span class="text-sm">
+                  {{ 'nodes.settings.audioOutput' | translate }} {{ formatNumber(audioIndex) }}:
+                </span>
+                <span class="text-sm font-medium text-white">
+                  {{ getMappedName(output) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="getVideoOutputs(nodeWrapper.node).length === 0 && getAudioOutputs(nodeWrapper.node).length === 0" 
+              class="text-gray-400 text-sm">
+              {{ 'nodes.settings.no.outputs.configured' | translate }}
+          </div>
+        </div>      
       </div>
     </div>
 
@@ -71,3 +150,24 @@
     </div>
   </div>
 </div>
+
+
+<app-confirmation-dialog
+  [isOpen]="isConfirmRemoveNodeOpen"
+  [title]="'nodes.settings.remove.node' | translate"
+  [message]="'nodes.settings.remove.node.description' | translate"
+  [confirmText]="'nodes.settings.confirm' | translate"
+  [cancelText]="'nodes.settings.cancel' | translate"
+  (close)="closeRemoveNodeConfirmation()"
+  (confirm)="confirmRemoveNode()"
+></app-confirmation-dialog>
+
+<app-confirmation-dialog
+  [isOpen]="isConfirmAddNodeOpen"
+  [title]="'nodes.settings.add.node' | translate"
+  [message]="'nodes.settings.add.node.description' | translate"
+  [confirmText]="'nodes.settings.confirm' | translate"
+  [cancelText]="'nodes.settings.cancel' | translate"
+  (close)="closeAddNodeConfirmation()"
+  (confirm)="confirmAddNode()"
+></app-confirmation-dialog>

@@ -1,8 +1,12 @@
 import { ActivatedRouteSnapshot, DetachedRouteHandle, RouteReuseStrategy } from '@angular/router';
+import { inject } from '@angular/core';
+import { ProjectWorkspaceService } from '../services/project-workspace.service';
+import { ProjectEditStateService } from '../services/projects/project-edit-state.service';
 
 export class CustomRouteReuseStrategy implements RouteReuseStrategy {
   private storedRoutes = new Map<string, DetachedRouteHandle>();
-
+  private projectWorkspace = inject(ProjectWorkspaceService);
+  private editStateService = inject(ProjectEditStateService);
   /**
    * Determine if a route should be detached (detached) to be reused later
    */
@@ -18,7 +22,7 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     if (this.shouldDetach(route)) {
       const key = this.getRouteKey(route);
   
-      this.storedRoutes.set(key, handle);
+      this.storedRoutes.set(key, handle);      
     }
   }
 
@@ -114,5 +118,10 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     keysToDelete.forEach(key => {
       this.storedRoutes.delete(key);
     });
+
+    // notify to workspace that the project is closed in edit mode
+    this.projectWorkspace.closeEdit(projectUuid);
+
+    this.editStateService.clearProjectData(projectUuid); // clear unsaved changes
   }
 } 

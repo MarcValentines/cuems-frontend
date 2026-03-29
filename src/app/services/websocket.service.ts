@@ -1,4 +1,3 @@
-// src/app/services/websocket.service.ts
 import { Injectable, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
@@ -16,7 +15,6 @@ export interface WebSocketError {
 })
 export class WebsocketService {
   private destroyRef = inject(DestroyRef);
-
   private host = `${AppConfig.websocketBaseUrl}/ws`;
 
   public isConnected = signal(false);

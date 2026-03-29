@@ -1,111 +1,11 @@
-<div class="wrapper">  
-  <div class="space-y-4 mb-8">
-    @for (layer of videoLayers(); track layer.id) {
-    <div class="flex items-center border-b pb-2" [class.layer-disabled]="layer.disabled">
-      <button class="px-2">⋮</button>
-      <div class="w-8 h-8 rounded" [class]="layer.color"></div>
-      <div class="ml-2 w-24 text-sm">{{ layer.time }}</div>
-      <div class="ml-2 px-2 py-1 border border-gray-300 rounded text-sm">{{ layer.name }}</div>
-      
-      <div class="flex-grow mx-4 flex items-center">
-        <input 
-          type="range" 
-          [value]="layer.opacity" 
-          (input)="updateOpacity(layer.id, $event)" 
-          min="0" 
-          max="100" 
-          class="w-full h-2 bg-gray-300 rounded"
-        >
-        <span class="ml-2 text-sm">{{ layer.opacity }}% / 100%</span>
-      </div>
-      
-      <!-- Controls -->
-      <div class="flex items-center space-x-2">
-        <label class="flex items-center">
-          <input 
-            type="checkbox" 
-            [checked]="!layer.disabled" 
-            (change)="toggleLayer(layer.id)" 
-            class="mr-1"
-          >
-          <span class="text-sm">{{ layer.disabled ? 'Enable' : 'Disable' }}</span>
-        </label>
-        
-        <button 
-          class="px-2 py-1 border rounded text-sm"
-          (click)="duplicateLayer(layer.id)"
-        >
-          Duplicate
-        </button>
-        <button class="px-2 py-1 border rounded text-sm flex items-center">
-          Edit settings
-          <span class="ml-1">▼</span>
-        </button>
-      </div>
-    </div>
-    }
+<div class="py-4">
+  <div class="flex items-center justify-between p-4 border-b">
+    <h2 class="text-lg font-semibold">Video Mixer</h2>
   </div>
-  
-  <!-- Video Transform Area -->
-  <div class="video-transform-container">
-    <div class="absolute left-4 top-4 text-white top-left-inputs">
-      <div>x: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded x-input" value="000.000"></div>
-      <div>y: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded y-input" value="000.000"></div>
-    </div>
-    
-    <div class="absolute right-4 top-4 text-white top-right-inputs">
-      <div>x: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded x-input" value="100.000"></div>
-      <div>y: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded y-input" value="000.000"></div>
-    </div>
-    
 
-    <div class="video-preview-area">
-      <div class="grid-overlay">
-        @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track i) {
-          <div class="border border-white/20"></div>
-        }
-      </div>
-      
-      <div 
-        class="corner-handle"
-        [style.left]="topLeftX + '%'"
-        [style.top]="topLeftY + '%'"
-        [class.dragging]="draggedCorner() === 'topLeft'"
-        (mousedown)="startDrag('topLeft', $event)"
-      ></div>
-      <div 
-        class="corner-handle"
-        [style.left]="topRightX + '%'"
-        [style.top]="topRightY + '%'"
-        [class.dragging]="draggedCorner() === 'topRight'"
-        (mousedown)="startDrag('topRight', $event)"
-      ></div>
-      <div 
-        class="corner-handle"
-        [style.left]="bottomLeftX + '%'"
-        [style.top]="bottomLeftY + '%'"
-        [class.dragging]="draggedCorner() === 'bottomLeft'"
-        (mousedown)="startDrag('bottomLeft', $event)"
-      ></div>
-      <div 
-        class="corner-handle"
-        [style.left]="bottomRightX + '%'"
-        [style.top]="bottomRightY + '%'"
-        [class.dragging]="draggedCorner() === 'bottomRight'"
-        (mousedown)="startDrag('bottomRight', $event)"
-      ></div>
-    </div>
-    
-    <div class="absolute left-4 bottom-4 text-white bottom-left-inputs">
-      <div>x: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded x-input" value="000.000"></div>
-      <div>y: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded y-input" value="100.000"></div>
-    </div>
-    
-    <div class="absolute right-4 bottom-4 text-white bottom-right-inputs">
-      <div>x: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded x-input" value="100.000"></div>
-      <div>y: <input type="text" class="bg-gray-700 w-20 px-2 py-1 rounded y-input" value="100.000"></div>
-    </div>
+  <div class="mt-4 p-6 bg-dark-300 rounded-lg text-center">
+    <app-icon icon="video" class="mx-auto h-12 w-12 text-gray-400"></app-icon>
+    <h3 class="mt-2 text-sm font-medium text-gray-300">Video Mixer</h3>
+    <p class="mt-1 text-sm text-gray-500">Video mixer functionality will be implemented here.</p>
   </div>
-  
-  <div class="text-sm text-gray-400">Vivamus sagittis lacus vel augue</div>
 </div>

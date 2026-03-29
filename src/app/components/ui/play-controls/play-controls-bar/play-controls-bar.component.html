@@ -1,0 +1,46 @@
+<div class="flex items-center gap-6 font-mono">
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-small w-10 h-10"
+        [class.btn-secondary]="oscService.armed()"
+        [class.btn-muted]="!oscService.armed()"
+        [disabled]="!oscService.armed()"
+        (click)="oscService.go()">
+        {{ 'playControls.go' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-small btn-muted w-10 h-10"
+        (click)="oscService.stop()"
+        [disabled]="!oscService.armed()">
+          <app-icon icon="stop"></app-icon>
+      </button>
+      <button
+        type="button"
+        class="btn btn-small btn-muted w-10 h-10"
+        (click)="oscService.pause()"
+        [disabled]="!oscService.armed()">
+          <app-icon icon="pause"></app-icon>
+      </button>
+    </div>
+    @if (oscService.running()) {
+    <div class="overflow-hidden md:max-w-[240px] xl:max-w-[320px] opacity-0" [class.opacity-100]="oscService.running()">
+      <div class="flex w-max whitespace-nowrap text-xs text-gray-500 animate-marquee">
+        <!-- original -->
+        <app-play-controls-bar-info />
+        <!-- duplicated loop without jump -->
+        <app-play-controls-bar-info aria-hidden="true" />
+      </div>
+    </div>
+    } @else if (oscService.loadedProject() !== '') {
+      <div class="overflow-hidden md:max-w-[240px] xl:max-w-[320px]">
+        <div class="flex w-max whitespace-nowrap text-xs text-gray-500">
+          <div class="px-4">
+            <span class="font-medium">{{ 'playControls.project' | translate }}:</span>
+            <span class="text-primary ml-1">{{ oscService.loadedProject() || '—' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>

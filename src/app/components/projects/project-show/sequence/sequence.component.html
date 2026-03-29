@@ -24,35 +24,36 @@
           <tbody class="divide-y divide-gray-200">
             <tr *ngFor="let cueItem of project.CuemsScript.CueList.contents; let i = index"
                 [class]="getCuePlaybackClasses(cueItem)"
-                class="hover:bg-dark-200 transition-colors">
+                class="hover:bg-dark-200 transition-colors cursor-pointer"
+                (click)="onClickSetNextCue(cueItem)">
               <!-- Type Icon -->
-              <td class="px-4 py-3">
+              <td class="px-4 py-1 relative translate-y-[3px]">
                 <app-icon [icon]="getCueTypeIcon(cueItem)" class="w-[16px] h-[16px]"></app-icon>
               </td>
               <!-- Order with zero padding -->
-              <td class="px-4 py-3 text-sm font-medium">
+              <td class="px-4 py-1 text-sm font-medium">
                 {{ formatOrderNumber(i + 1) }}
               </td>
               <!-- Name with truncate -->
-              <td class="px-4 py-3 text-sm" style="max-width: 240px;">
+              <td class="px-4 py-1 text-sm" style="max-width: 240px;">
                 <div class="overflow-hidden text-ellipsis whitespace-nowrap">
                   {{ getCueName(cueItem) }}
                 </div>
               </td>
 
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-1 text-sm">
                 {{ getCueDuration(cueItem) }}
               </td>
 
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-1 text-sm">
                 {{ getCuePrewait(cueItem) }}
               </td>
 
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-1 text-sm">
                 {{ getCuePostwait(cueItem) }}
               </td>
 
-              <td class="px-4 py-3">
+              <td class="px-4 py-1">
                 <app-icon [icon]="getCueActionIcon(cueItem)" class="w-8 h-8 fill-red-500"></app-icon>
               </td>
             </tr>

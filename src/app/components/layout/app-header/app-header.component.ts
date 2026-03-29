@@ -1,8 +1,10 @@
-import { Component, ElementRef, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterModule, RouterLink, RouterLinkActive } from '@angular/router';
 import { IconComponent } from '../../ui/icon/icon.component';
+import { OpenProjectsDropdownComponent } from '../../ui/open-projects-dropdown/open-projects-dropdown.component';
+import { ShowProjectLoadedIndicatorComponent } from '../../ui/show-project-loaded-indicator/show-project-loaded-indicator.component';
 
 @Component({
   selector: 'app-header',
@@ -13,7 +15,9 @@ import { IconComponent } from '../../ui/icon/icon.component';
     RouterModule,
     RouterLink,
     RouterLinkActive,
-    IconComponent
+    IconComponent,
+    OpenProjectsDropdownComponent,
+    ShowProjectLoadedIndicatorComponent
   ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',
@@ -32,7 +36,6 @@ import { IconComponent } from '../../ui/icon/icon.component';
 export class AppHeaderComponent {
   isMobileMenuOpen = false;
   isProfileDropdownOpen = false;
-  
   constructor(private elementRef: ElementRef) {}
 
   @HostListener('document:click', ['$event'])

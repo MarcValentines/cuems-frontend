@@ -1,7 +1,7 @@
 <header class="border-b-2 border-gray-300 relative z-10">
     <nav class="shadow-sm translate-y-[2px]">
         <div class="wrapper">
-          <div class="flex h-20 justify-between">
+          <div class="flex h-20 justify-between md:gap-4 lg:gap-8">
             <div class="flex px-2 lg:px-0">
               <div class="flex shrink-0 items-center">
                 <a
@@ -12,30 +12,36 @@
                   <img width="165px" height="43px" src="assets/img/formitgo-logo.svg" alt="Formitgo">
                 </a>
               </div>
-              <div class="hidden lg:ml-12 xl:ml-24 lg:flex lg:space-x-8">
+              <div class="hidden md:ml-0 lg:ml-12 xl:ml-24 lg:flex lg:space-x-8">
                 <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
                 <a
                   routerLink="/dashboard"
                   routerLinkActive="active-route"
                   [routerLinkActiveOptions]="{exact: true}"
-                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base font-bold hover:border-gray-300 hover:text-gray-300">
+                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base md:text-sm xl:text-base font-bold hover:border-gray-300 hover:text-gray-300">
                   {{ 'dashboard' | translate }}
                 </a>
                 <a
                   routerLink="/projects"
                   routerLinkActive="active-route"
-                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base font-bold hover:border-gray-300 hover:text-gray-300">
+                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base md:text-sm xl:text-base font-bold hover:border-gray-300 hover:text-gray-300">
                   {{ 'projects' | translate }}
                 </a>
                 <a
                   routerLink="/media"
                   routerLinkActive="active-route"
-                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base font-bold hover:border-gray-300 hover:text-gray-300">
+                  class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-base md:text-sm xl:text-base font-bold hover:border-gray-300 hover:text-gray-300">
                   {{ 'my.library' | translate }}
                 </a>
               </div>
             </div>
 
+            <div class="hidden lg:flex lg:flex-1 lg:items-center lg:justify-start lg:ml-6 gap-4">
+              <app-open-projects-dropdown />
+              
+              <app-show-project-loaded-indicator />
+            </div>          
+            
             <div class="flex items-center lg:hidden">
               <!-- Mobile menu button -->
               <button type="button"
@@ -147,6 +153,12 @@
               class="block border-l-4 border-transparent py-2 pr-4 pl-3 text-base font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800">
               {{ 'my.library' | translate }}
             </a>
+            <div class="border-t border-gray-200 pt-3 pb-2 px-4">
+              <app-open-projects-dropdown />
+            </div>
+            <div class="border-t border-gray-200 pt-3 pb-2 px-4">
+              <app-show-project-loaded-indicator />
+            </div>
           </div>
           <div class="border-t border-gray-200 pt-4 pb-3">
             <div class="mt-3 space-y-1">

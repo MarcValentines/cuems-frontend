@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject, inject } from '@angular/core';
+import { Router, RouterOutlet, RouteReuseStrategy } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AppHeaderComponent } from './components/layout/app-header/app-header.component';
 import { AppFooterComponent } from './components/layout/app-footer/app-footer.component';
 import { LanguageService } from './services/language.service';
@@ -9,6 +9,9 @@ import { WebsocketService } from './services/websocket.service';
 import { Subscription } from 'rxjs';
 import { NotificationsComponent } from './components/ui/notifications/notifications.component';
 import { NotificationService } from './services/ui/notification.service';
+import { ProjectWorkspaceService } from './services/project-workspace.service';
+import { CustomRouteReuseStrategy } from './core/route-reuse.strategy';
+import { ConfirmationDialogComponent } from './components/ui/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-root',
@@ -17,14 +20,18 @@ import { NotificationService } from './services/ui/notification.service';
     RouterOutlet,
     AppHeaderComponent,
     AppFooterComponent,
-    NotificationsComponent
+    NotificationsComponent,
+    ConfirmationDialogComponent,
+    TranslateModule,
   ],
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'formitgo-tw';
-
   private errorSubscription = new Subscription();
+  workspace = inject(ProjectWorkspaceService);
+  private strategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
+  private router = inject(Router);
 
   constructor(
     private translate: TranslateService,
@@ -48,16 +55,13 @@ export class AppComponent implements OnInit, OnDestroy {
         this.translate.use('es');
       }
     }
-
     this.languageService.initializeLanguage();
-
     if (isPlatformBrowser(this.platformId)) {
       this.updateHtmlLang(this.translate.currentLang);
       this.languageService.currentLang$.subscribe(lang => {
         this.updateHtmlLang(lang);
       });
     }
-
     this.errorSubscription = this.wsService.errors.subscribe(error => {
       this.handleWebSocketError(error);
     });
@@ -67,17 +71,20 @@ export class AppComponent implements OnInit, OnDestroy {
     this.errorSubscription.unsubscribe();
   }
 
-  /**
-   * Handle the errors received from the WebSocket
-   */
-  private handleWebSocketError(error: any): void {
-    // If the error was already handled by a specific component, don't show it globally
-    if (error._handledByProjectShow) {
-      return;
+  onConfirmClose(): void {
+    const uuid = this.workspace.pendingCloseUuid();
+    if (uuid) {
+      this.strategy.clearProjectRoutes(uuid);
+      if (this.router.url.includes(`/projects/${uuid}/edit`)) {
+        this.router.navigate(['/projects']);
+      }
     }
+    this.workspace.onConfirmClose();
+  }
 
+  private handleWebSocketError(error: any): void {
+    if (error._handledByProjectShow) return;
     let errorMessage = 'Ha ocurrido un error';
-
     if (error.value && typeof error.value === 'string') {
       if (error.value.includes('cannot be lesser than 3')) {
         errorMessage = 'El nombre debe tener al menos 3 caracteres';
@@ -87,13 +94,9 @@ export class AppComponent implements OnInit, OnDestroy {
         errorMessage = `Error en la acción "${error.action}"`;
       }
     }
-
     this.notificationService.showError(errorMessage);
   }
 
-  /**
-   * Update the lang attribute of the HTML element
-   */
   private updateHtmlLang(lang: string): void {
     document.documentElement.lang = lang;
   }

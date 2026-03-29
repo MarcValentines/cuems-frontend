@@ -93,13 +93,12 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
         .map((nodeWrapper: any, nodeIndex: number) => {
           const node = nodeWrapper.node;
           const outputs: any[] = [];
-          
           node.audio.forEach((audioSection: any) => {
             if (audioSection.outputs) {
               audioSection.outputs.forEach((outputWrapper: any, outputIndex: number) => {
                 outputs.push({
                   parentId: node.uuid,
-                  id: `${node.uuid}_${outputWrapper.output.name}`,
+                  id: `${node.uuid}_${outputWrapper.output.id ?? outputWrapper.output.name}`,
                   name: outputWrapper.output.name,
                   volume: 100,
                   index: outputIndex
@@ -169,7 +168,7 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
     output.volume = sliderValue;
     const floatVolume = this.sliderToFloat(sliderValue);
 
-    console.log('output.index', output.index);
-    this.oscService.sendNodeVolumeUpdate(node.uuid, output.id, output.index, floatVolume);
+    const channelIndex = output.index;
+    this.oscService.sendNodeVolumeUpdate(node.uuid, channelIndex, floatVolume);
   }
 }

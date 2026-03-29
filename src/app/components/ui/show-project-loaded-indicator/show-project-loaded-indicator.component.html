@@ -1,0 +1,13 @@
+<div class="flex items-center gap-2 text-xs font-mono">
+    <div class="w-2 h-2 rounded-full"
+         [class.bg-secondary]="workspace.showProject()"
+         [class.bg-muted]="!workspace.showProject()">
+    </div>
+    @if (workspace.showProject()) {
+      <a (click)="navigateToProject(workspace.showProject()!.uuid)" class="text-white truncate max-w-[140px] cursor-pointer">
+        {{ workspace.showProject()!.name }}
+      </a>
+    } @else {
+      <span class="text-muted-light text-xs">—</span>
+    }
+</div>

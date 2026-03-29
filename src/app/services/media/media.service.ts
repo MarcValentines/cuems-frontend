@@ -175,69 +175,55 @@ export class MediaService {
     });
   }
 
+  private isAudioFile(file: any): boolean {
+    if (!file?.type) return false;
+    const t = file.type.toUpperCase();
+    return t.includes('AUDIO') || ['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'WMA', 'OPUS', 'AIFF', 'APE', 'ALAC'].includes(t);
+  }
+
+  private isVideoFile(file: any): boolean {
+    if (!file?.type) return false;
+    const t = file.type.toUpperCase();
+    return t.includes('VIDEO') || t.includes('MOVIE') || ['MP4', 'AVI', 'MOV', 'MKV', 'WMV', 'FLV', 'WEBM', 'M4V', 'OGV'].includes(t);
+  }
+
   getFileByType(type: 'audio' | 'video'): any {
     const fileList = this.fileList();
-    
-    if (!fileList || fileList.length === 0) {
-      return null;
-    }
-
-    const audioTypes = ['AUDIO', 'MP3', 'WAV', 'AAC', 'OGG', 'FLAC'];
-    const videoTypes = ['MOVIE', 'VIDEO', 'MP4', 'AVI', 'MOV', 'MKV', 'WMV', 'FLV'];
-
-    const targetTypes = type === 'audio' ? audioTypes : videoTypes;
-
+    if (!fileList || fileList.length === 0) return null;
+    const isTarget = type === 'audio'
+      ? (f: any) => this.isAudioFile(f) || this.isVideoFile(f)
+      : (f: any) => this.isVideoFile(f);
     for (const fileObj of fileList) {
       const fileKeys = Object.keys(fileObj);
       if (fileKeys.length > 0) {
         const uuid = fileKeys[0];
         const file = fileObj[uuid];
-        
-        if (file && file.type && targetTypes.includes(file.type.toUpperCase())) {
-          return file;
-        }
+        if (file && isTarget(file)) return file;
       }
     }
-
-    // If no files are found, return a random file for testing
     const randomFileObj = fileList[Math.floor(Math.random() * fileList.length)];
-    
-    // Extract the first file from the random object
     const randomKeys = Object.keys(randomFileObj);
     if (randomKeys.length > 0) {
-      const randomFile = randomFileObj[randomKeys[0]];
-      return randomFile;
+      return randomFileObj[randomKeys[0]];
     }
-    
     return null;
   }
 
   getFilesByType(type: 'audio' | 'video'): Array<{uuid: string, file: any}> {
     const fileList = this.fileList();
-    
-    if (!fileList || fileList.length === 0) {
-      return [];
-    }
-
-    const audioTypes = ['AUDIO', 'MP3', 'WAV', 'AAC', 'OGG', 'FLAC'];
-    const videoTypes = ['MOVIE', 'VIDEO', 'MP4', 'AVI', 'MOV', 'MKV', 'WMV', 'FLV'];
-
-    const targetTypes = type === 'audio' ? audioTypes : videoTypes;
-
+    if (!fileList || fileList.length === 0) return [];
+    const isTarget = type === 'audio'
+      ? (f: any) => this.isAudioFile(f) || this.isVideoFile(f)
+      : (f: any) => this.isVideoFile(f);
     const filteredFiles: Array<{uuid: string, file: any}> = [];
-
     for (const fileObj of fileList) {
       const fileKeys = Object.keys(fileObj);
       if (fileKeys.length > 0) {
         const uuid = fileKeys[0];
         const file = fileObj[uuid];
-        
-        if (file && file.type && targetTypes.includes(file.type.toUpperCase())) {
-          filteredFiles.push({ uuid, file });
-        }
+        if (file && isTarget(file)) filteredFiles.push({ uuid, file });
       }
     }
-
     return filteredFiles;
   }
 } 

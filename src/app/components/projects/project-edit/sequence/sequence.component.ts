@@ -16,6 +16,7 @@ import { TimecodeMaskDirective } from '../../../../core/directives';
 import { Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { filter } from 'rxjs/operators';
+import { ProjectWorkspaceService } from '../../../../services/project-workspace.service';
 
 interface CueData {
   id: string | number;
@@ -38,8 +39,11 @@ interface CueData {
   selectedOutputs?: string[];
   dmx_channels?: Array<{channel: number, value: number}>;
   universe_num?: number;
+  fade_in_time?: number;
   master_vol?: number;
   originalData?: any;
+  action_target?: string | null;
+  action_type?: string;
 }
 
 @Component({
@@ -67,6 +71,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   private translateService = inject(TranslateService);
   public drawerService = inject(DrawerService);
   private subscription = new Subscription();
+  workspace = inject(ProjectWorkspaceService);
 
   readonly DRAWER_WIDTH = 500; // px
 
@@ -131,6 +136,12 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     );
 
     this.mediaService.getFileList();
+
+    this.subscription.add(
+      this.mediaService.fileListLoaded.subscribe(() => {
+        this.rematchMediaFiles();
+      })
+    );
 
     this.loadInitialMappings();
 
@@ -197,6 +208,37 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     }
 
     this.loadInitialMappings();
+  }
+
+  private rematchMediaFiles(): void {
+    const fileList = this.mediaService.fileList();
+    if (!fileList || fileList.length === 0) return;
+
+    let changed = false;
+    for (const cue of this.cues) {
+      if (cue.selectedMediaFile) continue;
+
+      const cueTypeKey = this.getCueTypeKey(cue.originalData);
+      const cueData = cueTypeKey ? cue.originalData[cueTypeKey] : null;
+      if (!cueData?.Media?.file_name) continue;
+
+      for (const fileObj of fileList) {
+        const fileKeys = Object.keys(fileObj);
+        if (fileKeys.length > 0) {
+          const uuid = fileKeys[0];
+          const file = fileObj[uuid];
+          if (file && file.unix_name === cueData.Media.file_name) {
+            cue.selectedMediaFile = { uuid, file };
+            changed = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (changed) {
+      this.originalCues = JSON.parse(JSON.stringify(this.cues));
+    }
   }
 
   /**
@@ -389,8 +431,9 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       if (cueType === 'dmx' && cueData.DmxScene?.DmxUniverse?.dmx_channels) {
         dmx_channels = cueData.DmxScene.DmxUniverse.dmx_channels.map((channelWrapper: any) => {
           const channelData = channelWrapper.DmxChannel || channelWrapper;
+          const rawChannel = channelData.channel ?? 0;
           return {
-            channel: channelData.channel || 0,
+            channel: rawChannel + 1,
             value: channelData.value || 0
           };
         });
@@ -417,7 +460,10 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
         selectedOutputs,
         dmx_channels,
         universe_num,
+        fade_in_time: cueType === 'dmx' ? (() => { const ms = cueData.fadein_time ?? cueData.fade_in_time; return ms != null ? Number(ms) / 1000 : 0; })() : undefined,
         master_vol: cueData.master_vol || 20,
+        action_target: cueType === 'action' ? (cueData.action_target || null) : undefined,
+        action_type: cueType === 'action' ? (cueData.action_type || 'play') : undefined,
         originalData: cueItem // Keep original data
       };
     }).filter(cue => cue !== null) as CueData[];
@@ -552,8 +598,17 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     const confirmMessage = this.translateService.instant('delete.cue');
 
     if (confirm(confirmMessage)) {
+      const deletedCueId = String(this.cues[index].id);
+
       this.cues.splice(index, 1);
 
+      // Nullify action_target if it pointed to the deleted cue
+      this.cues.forEach(cue => {
+        if (cue.type === 'action' && cue.action_target === deletedCueId) {
+          cue.action_target = null;
+        }
+      });      
+      
       // Reorder the numbers of order
       this.cues.forEach((cue, i) => {
         cue.order = i + 1;
@@ -633,7 +688,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     if (type === 'dmx') {
       const template = this.projectsService.projectTemplate();
       let initialChannels = [{
-        channel: 0,
+        channel: 1,
         value: 0
       }];
       
@@ -644,8 +699,9 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
         if (dmxTemplate?.DmxCue?.DmxScene?.DmxUniverse?.dmx_channels) {
           initialChannels = dmxTemplate.DmxCue.DmxScene.DmxUniverse.dmx_channels.map((channelWrapper: any) => {
             const channelData = channelWrapper.DmxChannel || channelWrapper;
+            const rawChannel = Number(channelData.channel ?? 0);
             return {
-              channel: Number(channelData.channel || 0),
+              channel: rawChannel + 1,
               value: Number(channelData.value || 0)
             };
           });
@@ -653,6 +709,12 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       }
       
       newCue.dmx_channels = initialChannels;
+      newCue.fade_in_time = 0;
+    }
+
+    if (type === 'action') {
+      newCue.action_target = null;
+      newCue.action_type = 'play';
     }
     
     if (type !== 'audio' && type !== 'video' && type !== 'dmx') {
@@ -813,7 +875,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
 
     newCue.name = cue.name;
     newCue.description = cue.notes;
-    newCue.id = this.generateUUID();
+    newCue.id = cue.id && typeof cue.id === 'string' && cue.id.includes('-')  ? cue.id  : this.generateUUID();
     newCue.post_go = cue.post_go;
     newCue.offset = { CTimecode: this.ensureMilliseconds(cue.time) };
     newCue.prewait = { CTimecode: this.ensureMilliseconds(cue.prewait) };
@@ -830,6 +892,11 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     if (cue.type === 'action' && newCue.Media) {
       delete newCue.Media;
     }
+
+    if (cue.type === 'action') {
+      newCue.action_target = cue.action_target || null;
+      newCue.action_type = cue.action_type || 'play';
+    }    
 
     if (cue.type === 'audio' || cue.type === 'video') {
       if (newCue.Media) {
@@ -896,10 +963,10 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
           };
         }
         
-        // Assign the DMX channels wrapped in DmxChannel
+        // Assign the DMX channels: UI is 1-based (1–512), project/engine/dmxplayer use 0-based buffer index (OLA channel 1 = index 0)
         newCue.DmxScene.DmxUniverse.dmx_channels = cue.dmx_channels.map(ch => ({
           DmxChannel: {
-            channel: Number(ch.channel),
+            channel: Math.max(0, Number(ch.channel) - 1),
             value: Number(ch.value)
           }
         }));
@@ -911,6 +978,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
           newCue.DmxScene.DmxUniverse.universe_num = cue.universe_num ?? 0;
         }
       }
+      newCue.fadein_time = Math.round((cue.fade_in_time ?? 0) * 1000);
     }
 
     const result = { [cueTypeKey]: newCue };
@@ -1166,6 +1234,27 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
 
 
+  getCueOptionsForAction(currentCue: CueData): { value: string, label: string }[] {
+    const options = this.cues
+      .filter(c => c !== currentCue)
+      .map(c => ({
+        value: String(c.id),
+        label: `${c.order}. ${c.name}`
+      }));
+    
+    return options;
+  }
+  
+  onActionTargetChange(selectedValue: string | string[], cue: CueData): void {
+    if (Array.isArray(selectedValue)) {
+      cue.action_target = selectedValue.length > 0 ? selectedValue[0] : null;
+    } else {
+      cue.action_target = selectedValue || null;
+    }
+
+    this.checkForChanges();
+  } 
+
   private loadInitialMappings(): void {
     const mappings = this.projectsService.mappingOptions();
     
@@ -1280,8 +1369,8 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       cue.dmx_channels = [];
     }
     
-    // Find the next available number
-    let nextChannel = 0;
+    // Find the next available channel number (DMX channels start at 1)
+    let nextChannel = 1;
     const existingChannels = cue.dmx_channels.map(ch => ch.channel);
     while (existingChannels.includes(nextChannel)) {
       nextChannel++;
@@ -1316,15 +1405,17 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
    */
   onDmxChannelNumChange(cue: CueData, index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const newChannel = parseInt(input.value);
+    let newChannel = parseInt(input.value, 10);
+    if (isNaN(newChannel) || newChannel < 1) newChannel = 1;
+    if (newChannel > 512) newChannel = 512;
     
     if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
     
     if (this.isDmxChannelNumValid(cue, newChannel, index)) {
       cue.dmx_channels[index].channel = newChannel;
+      input.value = String(newChannel);
       this.checkForChanges();
     } else {
-      // If the number is duplicated, revert to the previous value
       setTimeout(() => {
         input.value = cue.dmx_channels![index].channel.toString();
       });
@@ -1346,8 +1437,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
 
   onUniverseNumChange(cue: CueData, value: any): void {
-    console.log('Raw value received:', value, 'Type:', typeof value);
-    
     // Handle empty string or null/undefined values
     if (value === '' || value === null || value === undefined) {
       cue.universe_num = 0;
@@ -1356,7 +1445,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     }
     
     const newValue = parseInt(value.toString());
-    console.log('Parsed newValue:', newValue, 'IsNaN:', isNaN(newValue));
     
     if (cue.type !== 'dmx') return;
     
@@ -1371,7 +1459,18 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       cue.universe_num = newValue;
     }
     
-    console.log('Final cue.universe_num:', cue.universe_num);
+    this.checkForChanges();
+  }
+
+  onDmxFadeTimeChange(cue: CueData, value: any): void {
+    if (cue.type !== 'dmx') return;
+    if (value === '' || value === null || value === undefined) {
+      cue.fade_in_time = 0;
+      this.checkForChanges();
+      return;
+    }
+    const num = parseFloat(value.toString());
+    cue.fade_in_time = isNaN(num) || num < 0 ? 0 : num;
     this.checkForChanges();
   }
 

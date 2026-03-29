@@ -1,0 +1,49 @@
+<div class="p-3 bg-dark-300 rounded-lg">
+  @switch (status()) {
+    @case ('checking') {
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
+        <span class="text-sm font-medium">{{ 'project.show.engine.status.checking' | translate }}</span>
+      </div>
+    }
+    @case ('different-project') {
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 bg-tertiary rounded-full animate-pulse"></div>
+        <span class="text-sm font-medium">
+          {{ 'project.show.engine.status.different-project' | translate }}
+          @if (runningProject()) {
+            <a [routerLink]="['/projects', runningProject().uuid, 'sequence']"
+              class="text-tertiary underline ml-1">
+              {{ runningProject().name }}
+            </a>
+          }
+        </span>
+      </div>
+    }
+    @case ('running') {
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 bg-tertiary rounded-full animate-pulse"></div>
+        <span class="text-sm font-medium">{{ 'project.show.engine.status.running' | translate }}</span>
+      </div>
+    }
+    @case ('error') {
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-4 h-4 bg-tertiary rounded-full"></div>
+        <span class="text-sm font-medium">{{ 'project.show.engine.status.error' | translate }}</span>
+      </div>
+      <p class="text-xs ml-7">{{ engineError() }}</p>
+    }
+    @case ('ready') {
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 bg-secondary rounded-full"></div>
+        <span class="text-sm font-medium">{{ 'project.show.engine.status.ready' | translate }}</span>
+      </div>
+    }
+    @case ('idle') {
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 bg-muted rounded-full"></div>
+        <span class="text-sm font-medium">{{ 'project.show.engine.status.idle' | translate }}</span>
+      </div>
+    }
+  }
+</div>

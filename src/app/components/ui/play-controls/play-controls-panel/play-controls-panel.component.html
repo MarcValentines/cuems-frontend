@@ -1,0 +1,103 @@
+<div class="bg-dark-200 border border-gray-300 rounded-xl p-5 min-w-[300px]"
+     style="box-shadow: 0 0 0 1px #2C343A, 0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03)">
+
+  <!-- Header label -->
+  <div class="text-[10px] font-mono tracking-[0.2em] uppercase text-muted-light mb-4">
+    <div class="flex items-center gap-2">
+      <div class="w-2 h-2 rounded-full transition-all duration-300"
+           [class.bg-secondary]="oscService.running()"
+           [class.bg-muted]="!oscService.running()"
+           [style.box-shadow]="oscService.running() ? '0 0 8px rgba(72,197,137,0.7)' : 'none'">
+      </div>
+      <span class="font-mono text-[11px] tracking-widest uppercase text-gray-200">
+        {{ (oscService.running() ? 'playControls.playing' : 'playControls.stopped') | translate }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Timecode display -->
+  <div class="bg-black border border-gray-300 rounded-sm px-4 py-2 mb-4 text-center"
+       style="box-shadow: inset 0 2px 6px rgba(0,0,0,0.6)">
+    <span class="font-mono text-2xl tracking-widest tabular-nums transition-colors duration-300"
+          [class.text-secondary]="oscService.running()"
+          [class.text-muted-light]="!oscService.running()"
+          [style.text-shadow]="oscService.running() ? '0 0 16px rgba(72,197,137,0.4)' : 'none'">
+      {{ timecodeDisplay }}
+    </span>
+  </div>
+
+  <!-- Status row -->
+  <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center gap-2">
+      <span class="font-mono text-[11px] uppercase text-gray-200 truncate max-w-[140px] block">
+        {{ 'playControls.nextCue' | translate }}: {{ oscService.cueNames()[oscService.nextCue() ?? ''] || oscService.nextCue() || '—' }}
+      </span>
+    </div>
+    <div class="font-mono text-[11px] text-muted-light truncate max-w-[200px]"
+         [title]="oscService.loadedProject() || ''">
+      {{ oscService.loadedProject() || '—' }}
+    </div>
+  </div>
+
+  <!-- Transport buttons -->
+  <div class="flex gap-3">
+
+    <!-- GO -->
+    <button
+      type="button"
+      class="flex flex-col items-center gap-2 flex-1 rounded-lg px-3 py-2 border transition-all duration-150 active:scale-95"
+      [class.border-secondary]="oscService.armed()"
+      [class.bg-dark-300]="oscService.armed()"
+      [class.text-secondary]="oscService.armed()"
+      [class.border-gray-300]="!oscService.armed()"
+      [class.bg-dark-100]="!oscService.armed()"
+      [class.text-muted-light]="!oscService.armed()"
+      [class.opacity-40]="!oscService.armed()"
+      [class.cursor-not-allowed]="!oscService.armed()"
+      [disabled]="!oscService.armed()"
+      (click)="oscService.go()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+      <span class="font-mono text-[10px] tracking-widest uppercase">
+        {{ 'playControls.go' | translate }}
+      </span>
+    </button>
+
+    <!-- PAUSE -->
+    <button
+      type="button"
+      class="flex flex-col items-center gap-2 flex-1 rounded-lg px-3 py-2 border transition-all duration-150 active:scale-95"
+      [class.border-gray-300]="oscService.running()"
+      [class.bg-dark-300]="oscService.running()"
+      [class.text-gray-100]="oscService.running()"
+      [class.border-gray-300]="!oscService.running()"
+      [class.bg-dark-100]="!oscService.running()"
+      [class.text-muted-light]="!oscService.running()"
+      [class.opacity-40]="!oscService.running()"
+      [class.cursor-not-allowed]="!oscService.running()"
+      [disabled]="!oscService.running()"
+      (click)="oscService.pause()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+      </svg>
+      <span class="font-mono text-[10px] tracking-widest uppercase">
+        {{ 'playControls.pause' | translate }}
+      </span>
+    </button>
+
+    <!-- STOP -->
+    <button
+      type="button"
+      class="flex flex-col items-center gap-2 flex-1 rounded-lg px-3 py-2 border border-tertiary bg-dark-300 text-tertiary hover:bg-dark-100 hover:text-tertiary-light transition-all duration-150 active:scale-95"
+      (click)="oscService.stop()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
+      </svg>
+      <span class="font-mono text-[10px] tracking-widest uppercase">
+        {{ 'playControls.stop' | translate }}
+      </span>
+    </button>
+
+  </div>
+</div>

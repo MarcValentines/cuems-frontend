@@ -1,3 +1,3 @@
-export const AppConfig = {
-    websocketBaseUrl: 'wss://dev.stagelab.coop'
-} as const;
+import config from './app-config.json';
+
+export const AppConfig = config;

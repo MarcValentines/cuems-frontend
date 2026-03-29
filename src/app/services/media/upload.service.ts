@@ -219,6 +219,9 @@ export class UploadService {
 
         // Upload finished, send 'finished' to the upload websocket
         if (finished) {
+          if (params.onProgress) {
+            params.onProgress(100);
+          }
           const hash = md5.finalize();
           const hashHex = hash.toString(CryptoJS.enc.Hex);
           
@@ -248,12 +251,11 @@ export class UploadService {
         const chunk = file.slice(sliceStart, sliceEnd);
         reader.readAsArrayBuffer(chunk);
 
-        const progress = Math.round((sliceStart * 100) / end);
+        sliceStart = sliceEnd;
+        const progress = Math.min(100, Math.round((sliceStart * 100) / end));
         if (params.onProgress) {
           params.onProgress(progress);
         }
-
-        sliceStart = sliceEnd;
       },
       error: (err) => {
         console.error('Upload WebSocket error:', err);

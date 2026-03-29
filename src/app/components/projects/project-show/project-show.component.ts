@@ -10,11 +10,14 @@ import { DrawerService } from '../../../services/ui/drawer.service';
 import { WebsocketService } from '../../../services/websocket.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { PlayControlsFloatingComponent } from '../../ui/play-controls/play-controls-floating/play-controls-floating.component';
+import { ProjectWorkspaceService } from '../../../services/project-workspace.service';
+import { EngineStatusComponent } from '../../ui/engine-status/engine-status.component';
 
 @Component({
   selector: 'app-project-show',
   standalone: true,
-  imports: [CommonModule, RouterModule, AppPageHeaderComponent, TranslateModule, IconComponent],
+  imports: [CommonModule, RouterModule, AppPageHeaderComponent, TranslateModule, IconComponent, PlayControlsFloatingComponent, EngineStatusComponent],
   templateUrl: './project-show.component.html'
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
@@ -23,6 +26,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
   private websocketService = inject(WebsocketService);
   private oscService = inject(OscService);
   public drawerService = inject(DrawerService);
+  private workspace = inject(ProjectWorkspaceService);
   
   readonly DRAWER_WIDTH = 500;
   
@@ -40,7 +44,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.projectUuid = params['uuid'];
-      console.log('Project UUID:', this.projectUuid);
 
       if (this.projectsService.projects().length === 0) {
         this.projectsService.getProjectList();
@@ -48,7 +51,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
       this.projectsService.loadProject(this.projectUuid);
       
-      this.checkProjectReady();
+      //this.checkProjectReady();
     });
 
     this.projectLoadedSubscription = this.projectsService.projectLoaded.subscribe(projectData => {
@@ -63,6 +66,18 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         }
         
         this.project = projectData;
+
+        if (this.projectUuid && this.project.name) {
+          if (!this.oscService.running()) {
+            this.workspace.openInShow(this.projectUuid, this.project.name);
+            this.checkProjectReady();
+          } else {
+            this.isCheckingEngine = false;
+            if (this.isSameProjectRunning) {
+              this.isProjectReady = true;
+            }            
+          }
+        }
       }
     });
 
@@ -101,6 +116,11 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
   private checkProjectReady(): void {
     if (this.projectUuid) {
+      if (this.oscService.running()) {
+        this.isCheckingEngine = false;
+        return;
+      }
+
       this.isCheckingEngine = true;
       this.engineError = null;
       this.isProjectReady = false;
@@ -151,5 +171,36 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
   public pause(): void {
     console.log('PAUSE!!!!');
     this.oscService.pause();
+  }
+
+  get isEngineRunning(): boolean {
+    return this.oscService.running();
+  }
+  
+  get runningProject() {
+    return this.projectsService.projects().find(
+      p => p.unix_name?.toLowerCase() === this.oscService.loadedProject().toLowerCase()
+    ) ?? null;
+  }
+  
+  get isSameProjectRunning(): boolean {
+    if (!this.project?.unix_name) return false;
+    return this.oscService.loadedProject().toLowerCase() === this.project.unix_name.toLowerCase();
+  }
+  
+  get isDifferentProjectRunning(): boolean {
+    return this.isEngineRunning &&
+           this.oscService.loadedProject() !== '' &&
+           !this.isSameProjectRunning;
+  }
+  
+  get engineStatus() {
+    if (this.isCheckingEngine) return 'checking';
+    if (this.isEngineRunning && !this.project) return 'checking';
+    if (this.isDifferentProjectRunning) return 'different-project';
+    if (this.isEngineRunning) return 'running';
+    if (this.engineError) return 'error';
+    if (this.isProjectReady) return 'ready';
+    return 'idle';
   }
 } 

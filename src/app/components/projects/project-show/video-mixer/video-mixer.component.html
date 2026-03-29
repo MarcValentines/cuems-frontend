@@ -1,11 +1,133 @@
-<div class="py-4">
-  <div class="flex items-center justify-between p-4 border-b">
-    <h2 class="text-lg font-semibold">Video Mixer</h2>
-  </div>
+<div class="wrapper">  
+  <div class="space-y-4 mb-8">
+    @for (node of videoNodesWithUI(); track node.nodeUuid) {
+      <div class="flex items-center gap-3">
+        <app-icon icon="node" class="w-5 h-5 text-secondary"></app-icon>
+        <div>
+          <h3 class="font-medium text-white">Node {{ node.nodeUuid }}</h3>
+        </div>
+      </div>      
+      @for (output of node.outputs; track output.id) {
+      <div class="border border-gray-100/20 rounded">
+        <!-- Layer Header -->
+        <div class="flex items-center pb-2 p-2">
+          <div class="w-8 h-8 rounded bg-gradient-to-br from-dark-300 to-primary"></div>
+          <div class="ml-2 px-2 py-1 rounded text-sm">Output: {{ getOutputDisplayName(output.name) }}</div>
+          
+          <div class="flex-grow mx-4 flex items-center">
+            <input 
+              type="range" 
+              [value]="output.scale" 
+              (input)="updateScale(output.id, $event)" 
+              min="0.1" 
+              max="4" 
+              step="0.1"
+              class="appearance-none w-full h-2 bg-gray-300 rounded"
+            >
+            <span class="ml-2 text-sm whitespace-nowrap">Scale:{{ output.scale.toFixed(1) }}x</span>
+          </div>
+          
+          <!-- Controls -->
+          <div class="flex items-center space-x-2">          
+            <button 
+              class="px-2 py-1 text-sm flex items-center"
+              (click)="toggleSettings(output.id)"
+            >
+              Edit
+              <span class="ml-1 transition-transform" [class.rotate-180]="output.settingsExpanded">▼</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Collapsible Video Transform Area -->
+        @if (output.settingsExpanded && output.corners) {
+        <div class="video-transform-container mt-4" [id]="'layer-' + output.id + '-transform'">
+          <div class="absolute left-4 top-4 text-white top-left-inputs">
+            <div class="text-xs flex flex-col gap-1 p-2 bg-black rounded-sm">
+              <span class="font-bold">Corner 4</span>
+              <span class="text-white">x:  {{ output.corners.topLeft.x.toFixed(3) }}</span>
+              <span class="text-white">y:  {{ output.corners.topLeft.y.toFixed(3) }}</span>
+              <span class="text-white">MovX: {{ getMovementFromVisual('topLeft', output.corners.topLeft.x, output.corners.topLeft.y).x.toFixed(3) }}</span>
+              <span class="text-white">MovY: {{ getMovementFromVisual('topLeft', output.corners.topLeft.x, output.corners.topLeft.y).y.toFixed(3) }}</span>
+              <button (click)="resetCorner(output.id, 'topLeft')" class="text-xs text-white bg-gray-700 px-2 py-1 rounded-sm">Reset corner</button>
+            </div>
+          </div>
+          
+          <div class="absolute right-4 top-4 text-white top-right-inputs">
+            <div class="text-xs flex flex-col gap-1 p-2 bg-black rounded-sm">
+              <span class="font-bold">Corner 3</span>
+              <span class="text-white">x:  {{ output.corners.topRight.x.toFixed(3) }}</span>
+              <span class="text-white">y:  {{ output.corners.topRight.y.toFixed(3) }}</span>
+              <span class="text-white">MovX: {{ getMovementFromVisual('topRight', output.corners.topRight.x, output.corners.topRight.y).x.toFixed(3) }}</span>
+              <span class="text-white">MovY: {{ getMovementFromVisual('topRight', output.corners.topRight.x, output.corners.topRight.y).y.toFixed(3) }}</span>
+              <button (click)="resetCorner(output.id, 'topRight')" class="text-xs text-white bg-gray-700 px-2 py-1 rounded-sm">Reset corner</button>
+            </div>
+          </div>
+          
 
-  <div class="mt-4 p-6 bg-dark-300 rounded-lg text-center">
-    <app-icon icon="video" class="mx-auto h-12 w-12 text-gray-400"></app-icon>
-    <h3 class="mt-2 text-sm font-medium text-gray-300">Video Mixer</h3>
-    <p class="mt-1 text-sm text-gray-500">Video mixer functionality will be implemented here.</p>
+          <div class="video-preview-area">
+            <div class="grid-overlay">
+              @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+                <div class="border border-white/20"></div>
+              }
+            </div>
+            
+            <div 
+              class="corner-handle top-left"
+              [style.left]="(output.corners.topLeft.x / 2 * 100) + '%'"
+              [style.top]="(output.corners.topLeft.y / 2 * 100) + '%'"
+              [class.dragging]="draggedCorner() === 'topLeft' && activeLayerId() === output.id"
+              (mousedown)="startDragForLayer(output.id, 'topLeft', $event)"
+            ></div>
+            <div 
+              class="corner-handle top-right"
+              [style.left]="(output.corners.topRight.x / 2 * 100) + '%'"
+              [style.top]="(output.corners.topRight.y / 2 * 100) + '%'"
+              [class.dragging]="draggedCorner() === 'topRight' && activeLayerId() === output.id"
+              (mousedown)="startDragForLayer(output.id, 'topRight', $event)"
+            ></div>
+            <div 
+              class="corner-handle bottom-left"
+              [style.left]="(output.corners.bottomLeft.x / 2 * 100) + '%'"
+              [style.top]="(output.corners.bottomLeft.y / 2 * 100) + '%'"
+              [class.dragging]="draggedCorner() === 'bottomLeft' && activeLayerId() === output.id"
+              (mousedown)="startDragForLayer(output.id, 'bottomLeft', $event)"
+            ></div>
+            <div 
+              class="corner-handle bottom-right"
+              [style.left]="(output.corners.bottomRight.x / 2 * 100) + '%'"
+              [style.top]="(output.corners.bottomRight.y / 2 * 100) + '%'"
+              [class.dragging]="draggedCorner() === 'bottomRight' && activeLayerId() === output.id"
+              (mousedown)="startDragForLayer(output.id, 'bottomRight', $event)"
+            ></div>
+          </div>
+          
+          <div class="absolute left-4 bottom-4 text-white bottom-left-inputs">
+            <div class="text-xs flex flex-col gap-1 p-2 bg-black rounded-sm">
+              <span class="font-bold">Corner 1</span>
+              <span class="text-white">x:  {{ output.corners.bottomLeft.x.toFixed(3) }}</span>
+              <span class="text-white">y:  {{ output.corners.bottomLeft.y.toFixed(3) }}</span>
+              <span class="text-white">MovX: {{ getMovementFromVisual('bottomLeft', output.corners.bottomLeft.x, output.corners.bottomLeft.y).x.toFixed(3) }}</span>
+              <span class="text-white">MovY: {{ getMovementFromVisual('bottomLeft', output.corners.bottomLeft.x, output.corners.bottomLeft.y).y.toFixed(3) }}</span>
+              <button (click)="resetCorner(output.id, 'bottomLeft')" class="mt-1 text-xs text-white bg-gray-700 px-2 py-1 rounded-sm">Reset corner</button>
+            </div>
+          </div>
+          
+          <div class="absolute right-4 bottom-4 text-white bottom-right-inputs">
+            <div class="text-xs flex flex-col gap-1 p-2 bg-black rounded-sm">
+              <span class="font-bold">Corner 2</span>
+              <span class="text-white">x:  {{ output.corners.bottomRight.x.toFixed(3) }}</span>
+              <span class="text-white">y:  {{ output.corners.bottomRight.y.toFixed(3) }}</span>
+              <span class="text-white">MovX: {{ getMovementFromVisual('bottomRight', output.corners.bottomRight.x, output.corners.bottomRight.y).x.toFixed(3) }}</span>
+              <span class="text-white">MovY: {{ getMovementFromVisual('bottomRight', output.corners.bottomRight.x, output.corners.bottomRight.y).y.toFixed(3) }}</span>
+              <button (click)="resetCorner(output.id, 'bottomRight')" class="mt-1 text-xs text-white bg-gray-700 px-2 py-1 rounded-sm">Reset corner</button>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    }
   </div>
+  
 </div>

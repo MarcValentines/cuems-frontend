@@ -12,6 +12,22 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Local configuration
+
+This project requires a local config file that is not tracked in git (machine-specific).
+
+Copy the example file and fill in your values:
+```bash
+cp src/app/core/config/app-config.json.example src/app/core/config/app-config.json
+```
+
+Then edit `app-config.json` with your local settings:
+```json
+{
+  "websocketBaseUrl": "ws://YOUR_WEBSOCKET_BASE_URL"
+}
+```
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

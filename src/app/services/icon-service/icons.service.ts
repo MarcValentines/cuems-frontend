@@ -40,6 +40,14 @@ import { save } from './icons/save';
 import { PostGoPauseIcon } from './icons/post_go-pause';
 import { PostGoGoIcon } from './icons/post_go-go';
 import { PostGoGoAtEndIcon } from './icons/post_go-go_at_end';
+import { PlayIcon } from './icons/play';
+import { PauseIcon } from './icons/pause';
+import { PencilIcon } from './icons/pencil';
+import { RadioIcon } from './icons/radio';
+import { StopIcon } from './icons/stop';
+import { ChevronUpIcon } from './icons/chevron-up';
+import { ChevronDownIcon } from './icons/chevron-down';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -69,6 +77,8 @@ export class IconService {
     'search': SearchIcon,
     'closeCircle': CloseCircleIcon,
     'closeAlt': CloseAltIcon,
+    'chevronDown': ChevronDownIcon,
+    'chevronUp': ChevronUpIcon,
     'xMark': XMarkIcon,
     'trash': TrashIcon,
     'trashAlt': TrashAltIcon,
@@ -97,7 +107,12 @@ export class IconService {
     'save': save,
     'post_go_pause': PostGoPauseIcon,
     'post_go_go': PostGoGoIcon,
-    'post_go_go_at_end': PostGoGoAtEndIcon
+    'post_go_go_at_end': PostGoGoAtEndIcon,
+    'play': PlayIcon,
+    'pause': PauseIcon,
+    'stop': StopIcon,
+    'pencil': PencilIcon,
+    'radio': RadioIcon
   };
 
   private cache = new Map<string, SafeHtml>();

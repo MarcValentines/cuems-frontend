@@ -1,0 +1,35 @@
+<!-- wrapper always in DOM, CDK maintains state -->
+<div
+  #dragRef="cdkDrag"
+  cdkDrag
+  cdkDragBoundary="body"
+  (cdkDragEnded)="onDragEnded($event)"
+  class="fixed top-0 left-0 z-[9997]"
+  [class.pointer-events-none]="collapsed()"
+  [class.opacity-0]="collapsed()"
+  [class.invisible]="collapsed()">
+  <div class="relative">
+    <div
+      cdkDragHandle
+      class="absolute top-2 right-2 flex items-center gap-2 z-10 cursor-grab active:cursor-grabbing">
+      <span class="text-muted-light hover:text-gray-100 select-none">⠿</span>
+      <button
+        type="button"
+        class="flex items-center justify-center w-8 h-8 cursor-pointer hover:text-white"
+        (click)="toggle(); $event.stopPropagation()">
+        <app-icon icon="chevronDown" class="w-[16px] h-[16px]" />
+      </button>
+    </div>
+    <app-play-controls-panel />
+  </div>
+</div>
+
+<!-- collapsed: fixed bottom-right, always independent -->
+@if (collapsed()) {
+  <div class="fixed bottom-4 right-4 z-[9998] flex items-center justify-between gap-2 bg-dark-200 lg:min-w-[520px]">
+    <app-play-controls-bar />
+    <button type="button" class="flex items-center justify-center w-8 h-8 cursor-pointer hover:text-white" (click)="toggle()">
+      <app-icon icon="chevronUp" class="w-[16px] h-[16px]" />
+    </button>
+  </div>
+}

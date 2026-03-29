@@ -1,0 +1,54 @@
+<div class="relative">
+  <button
+    type="button"
+    (click)="toggle()"
+    class="flex items-center gap-2 text-sm hover:text-white transition-colors
+           lg:px-3 lg:py-1.5 lg:rounded-lg lg:border lg:border-gray-300"
+    >
+    @if (workspace.editProjects().length === 0) {
+      <span class="text-sm">{{ 'projects.workspace.none.open' | translate }}</span>
+    }
+    @if (workspace.editProjects().length > 0) {
+      <span class="truncate max-w-[140px]">
+        {{ (workspace.editProjects().length === 1 ? 'projects.workspace.open.one' : 'projects.workspace.open.many') | translate:{ count: workspace.editProjects().length } }}
+      </span>
+      @if (hasDirtyProjects()) {
+        <span class="w-1.5 h-1.5 rounded-full bg-tertiary shrink-0"></span>
+      }
+    }
+    <app-icon
+      icon="chevronDown"
+      class="w-[12px] h-[12px] shrink-0 transition-transform duration-150 ml-auto lg:ml-0"
+      [class.rotate-180]="isOpen()" />
+  </button>
+
+  @if (isOpen()) {
+    <div class="z-50 bg-dark-200 border border-gray-300 rounded-lg overflow-hidden
+                lg:absolute lg:top-full lg:left-0 lg:mt-2 lg:min-w-[260px] lg:shadow-xl
+                w-full mt-1"
+    >
+      @if (workspace.editProjects().length === 0) {
+        <div class="px-4 py-3 text-xs text-muted-light font-mono">
+          {{ 'projects.workspace.no.open.edit' | translate }}
+        </div>
+      }
+      @for (project of workspace.editProjects(); track project.uuid) {
+        <div
+          class="flex items-center gap-3 px-4 py-3 hover:bg-dark-300 cursor-pointer transition-colors group"
+          (click)="navigateTo(project.uuid)">
+          <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                [class.bg-tertiary]="project.isDirty"
+                [class.bg-transparent]="!project.isDirty">
+          </span>
+          <span class="flex-1 text-sm font-mono truncate">{{ project.name }}</span>
+          <button
+            type="button"
+            class="opacity-0 group-hover:opacity-100 transition-opacity p-1 flex items-center justify-center hover:text-tertiary-light cursor-pointer hover:bg-black"
+            (click)="close(project.uuid, $event)">
+            <app-icon icon="xMark" class="w-[16px] h-[16px]" />
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
