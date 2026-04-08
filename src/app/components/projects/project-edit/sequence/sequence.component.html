@@ -422,7 +422,7 @@
                                 (ngModelChange)="onDmxFadeTimeChange(cue, $event)"
                                 min="0"
                                 step="0.1"
-                                placeholder="0">
+                                placeholder="0.00">
                             </div>
                             <div class="field">
                               <label class="label">{{ 'dmx.channels' | translate }}</label>
@@ -492,6 +492,16 @@
                                 </svg>
                                 {{ 'dmx.channel.add' | translate }}
                               </button>
+                              <div class="field mt-4">
+                                  <label class="label">{{ 'media.select.outputs.label' | translate }}</label>
+                                  <app-multiselect
+                                    [options]="getMappingOptionsForCue(cue)"
+                                    [multiple]="true"
+                                    [placeholder]="getPlaceholderForCue(cue)"
+                                    [(ngModel)]="cue.selectedOutputs"
+                                    (selectionChange)="onOutputSelectionChange($event, cue)">
+                                  </app-multiselect>
+                                </div>
                             </div>
                           </div>
 
@@ -562,7 +572,7 @@
         <app-activity-drawer></app-activity-drawer>
       </div>
     </div>
-  </div> 
+  </div>
 }
 
 <app-confirmation-dialog

@@ -255,5 +255,13 @@
     "nodes.settings.cancel": "Cancel",
     "footer.powered.text": "Powered",
     "footer.promoted.text": "Promoted",
-    "footer.financed.text": "Financed"
+    "footer.financed.text": "Financed",
+    "dmxmixer.ola.panel": "Open Control Pannel",
+    "dmxmixer.ola.back": "Back to list",
+    "dmxmixer.ola.noNodes": "There are no DMX nodes",
+    "dmxmixer.ola.noNodes2": "Nodes will appear here once configured",
+    "dmxmixer.ola.selectNode": "Select a node to see its DMX channels",
+    "dmxmixer.ola.node": "DMX Node",
+    "dmxmixer.ola.remote": "Remote control panel",
+    "dmxmixer.ola.loading": "Loading control panel..."
 }

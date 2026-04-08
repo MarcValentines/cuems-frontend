@@ -255,5 +255,13 @@
     "nodes.settings.cancel": "Cancelar",
     "footer.powered.text": "Impulsado",
     "footer.promoted.text": "Promovido",
-    "footer.financed.text": "Financiado"
+    "footer.financed.text": "Financiado",
+    "dmxmixer.ola.panel": "Abrir Panel de Control",
+    "dmxmixer.ola.back": "Volver a la lista",
+    "dmxmixer.ola.noNodes": "No hay nodos DMX disponibles",
+    "dmxmixer.ola.noNodes2": "Los nodos aparecerán aquí una vez configurados",
+    "dmxmixer.ola.selectNode": "Selecciona un nodo para ver sus canales DMX",
+    "dmxmixer.ola.node": "Nodo DMX",
+    "dmxmixer.ola.remote": "Panel de control remoto",
+    "dmxmixer.ola.loading": "Cargando panel de control..."
 }

@@ -256,5 +256,13 @@
     "nodes.settings.cancel": "Cancelar",
     "footer.powered.text": "Impulsat",
     "footer.promoted.text": "Promogut",
-    "footer.financed.text": "Financiado"
+    "footer.financed.text": "Financiat",
+    "dmxmixer.ola.panel": "Obrir Panell de Control",
+    "dmxmixer.ola.back": "Tornar a la llista",
+    "dmxmixer.ola.noNodes": "No hi han nodes DMX disponibles",
+    "dmxmixer.ola.noNodes2": "Els nodes apareixeran aquí una vegada configurats",
+    "dmxmixer.ola.selectNode": "Selecciona un node per veure els seus canals DMX",
+    "dmxmixer.ola.node": "Node DMX",
+    "dmxmixer.ola.remote": "Panell de control remot",
+    "dmxmixer.ola.loading": "Carregant panell de control..."
 }
