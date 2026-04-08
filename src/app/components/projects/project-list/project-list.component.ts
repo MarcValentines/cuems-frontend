@@ -8,12 +8,13 @@ import { Subscription } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImportService, UploadParams } from '../../../services/media/import.service';
 import { ExportService, ExportParams } from '../../../services/media/export.service';
-
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
+import { IconComponent } from '../../ui/icon/icon.component';
 
 @Component({
   selector: 'app-project-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, AppPageHeaderComponent, ConfirmationDialogComponent, TranslateModule],
+  imports: [CommonModule, RouterModule, AppPageHeaderComponent, ConfirmationDialogComponent, TranslateModule, CdkMenu, CdkMenuItem, CdkMenuTrigger, IconComponent],
   templateUrl: './project-list.component.html'
 })
 export class ProjectListComponent implements OnInit, OnDestroy {
@@ -173,6 +174,10 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     }
 
     this.openDeleteConfirmation(uuid);
+  }
+
+  duplicateProject(uuid: string) {
+    this.projectsService.duplicateProject(uuid);
   }
 
   editProject(uuid: string): void {

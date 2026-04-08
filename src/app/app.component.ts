@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject, inject, effect } from '@angular/core';
 import { Router, RouterOutlet, RouteReuseStrategy } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AppHeaderComponent } from './components/layout/app-header/app-header.component';
@@ -12,6 +12,7 @@ import { NotificationService } from './services/ui/notification.service';
 import { ProjectWorkspaceService } from './services/project-workspace.service';
 import { CustomRouteReuseStrategy } from './core/route-reuse.strategy';
 import { ConfirmationDialogComponent } from './components/ui/confirmation-dialog/confirmation-dialog.component';
+import { ProjectsService } from './services/projects/projects.service';
 
 @Component({
   selector: 'app-root',
@@ -32,6 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
   workspace = inject(ProjectWorkspaceService);
   private strategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
   private router = inject(Router);
+  private projectsService = inject(ProjectsService);
 
   constructor(
     private translate: TranslateService,
@@ -39,7 +41,18 @@ export class AppComponent implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object,
     private wsService: WebsocketService,
     private notificationService: NotificationService
-  ) {}
+  ) {
+    effect(() => {
+      const uuid = this.projectsService.runningProjectUuid();
+      const projects = this.projectsService.projects();
+      if (uuid && projects.length > 0) {
+        const project = projects.find(p => p.uuid === uuid);
+        if (project && !this.workspace.showProject()) {
+          this.workspace.openInShow(uuid, project.name);
+        }
+      }
+    });    
+  }
 
   ngOnInit() {
     this.translate.addLangs(['es', 'en', 'ca']);

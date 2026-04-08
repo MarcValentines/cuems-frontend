@@ -40,6 +40,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
   private websocketErrorSubscription?: Subscription;
   private isWaitingForProjectReady: boolean = false;
   private router = inject(Router);
+  public isUnloading = false;
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -68,16 +69,16 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         this.project = projectData;
 
         if (this.projectUuid && this.project.name) {
-          if (!this.oscService.running()) {
+          if (!this.oscService.running() && !this.workspace.showProject()) {
             this.workspace.openInShow(this.projectUuid, this.project.name);
             this.checkProjectReady();
           } else {
             this.isCheckingEngine = false;
-            if (this.isSameProjectRunning) {
+            if (this.workspace.showProject()?.uuid === this.projectUuid) {
               this.isProjectReady = true;
-            }            
+            }
           }
-        }
+        }        
       }
     });
 
@@ -141,6 +142,11 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
       this.isProjectReady = true;
       this.isWaitingForProjectReady = false;
     }
+
+    if (response.type === 'project_unload' && response.value === 'OK') {
+      this.workspace.closeShow();
+      this.router.navigate(['/projects']);
+    }    
   }
 
   private handleWebSocketError(error: any): void {  
@@ -203,4 +209,15 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     if (this.isProjectReady) return 'ready';
     return 'idle';
   }
+
+  public closeProject(): void {
+    if (this.isUnloading) return;
+    this.isUnloading = true;
+    this.isWaitingForProjectReady = false;
+
+    this.websocketService.wsEmit({
+      action: 'project_unload',
+      value: this.projectUuid
+    });
+  }  
 } 

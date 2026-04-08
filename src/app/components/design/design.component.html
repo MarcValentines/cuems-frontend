@@ -467,6 +467,82 @@
       </button>
     </div>
   </section>
+
+
+  <section class="mb-12">
+    <h2 class="text-2xl font-bold mb-6">Tooltips</h2>
+  
+    <div class="grid grid-cols-3 gap-3">
+  
+      <!-- Row 1 -->
+      <button [appTooltip]="'Tooltip top-left'" tooltipPosition="top-left"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↖ top-left</button>
+      <button [appTooltip]="'Tooltip top'" tooltipPosition="top"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↑ top</button>
+      <button [appTooltip]="'Tooltip top-right'" tooltipPosition="top-right"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↗ top-right</button>
+  
+      <!-- Row 2 -->
+      <button [appTooltip]="'Tooltip left'" tooltipPosition="left"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ← left</button>
+      <button [appTooltip]="'Disabled'" [tooltipDisabled]="true"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 opacity-40 text-center whitespace-nowrap cursor-default">
+        ✕ disabled</button>
+      <button [appTooltip]="'Tooltip right'" tooltipPosition="right"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        right →</button>
+  
+      <!-- Row 3 -->
+      <button [appTooltip]="'Tooltip bottom-left'" tooltipPosition="bottom-left"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↙ btm-left</button>
+      <button [appTooltip]="'Tooltip bottom'" tooltipPosition="bottom"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↓ bottom</button>
+      <button [appTooltip]="'Tooltip bottom-right'" tooltipPosition="bottom-right"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-center whitespace-nowrap">
+        ↘ btm-right</button>
+  
+    </div>
+
+    <!-- Rich tooltips -->
+    <div class="grid grid-cols-3 gap-3 w-fit mt-8">
+
+
+      <!-- Title + description -->
+      <ng-template #tooltipTitle>
+        <div class="flex flex-col gap-0.5 bg-black p-2 rounded-md">
+          <span class="font-semibold text-white">AudioCue</span>
+          <span class="text-white/60 text-[11px]">Reproduce un archivo de audio con fade configurable</span>
+        </div>
+      </ng-template>
+      <button [appTooltip]="tooltipTitle" tooltipPosition="top"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors whitespace-nowrap">
+        título + desc
+      </button>
+
+
+      <!-- With dynamic context -->
+      <ng-template #tooltipContext let-data>
+        <div class="flex flex-col gap-0.5 bg-black p-2 rounded-md">
+          <span class="font-semibold">{{ data.name }}</span>
+          <span class="text-white/60 text-[11px]">prewait: {{ data.prewait }}s · postwait: {{ data.postwait }}s</span>
+        </div>
+      </ng-template>
+      <button
+        [appTooltip]="tooltipContext"
+        [tooltipContext]="{ name: 'Cue 03 - Entrada', prewait: 1.5, postwait: 0 }"
+        tooltipPosition="bottom"
+        class="text-xs px-2 py-1.5 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors whitespace-nowrap">
+        Con contexto
+      </button>
+
+    </div>    
+  </section>  
 </div>
 
 <app-modal [isOpen]="isBaseModalOpen" (close)="closeBaseModal()">

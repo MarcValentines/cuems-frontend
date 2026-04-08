@@ -6,6 +6,7 @@ import { IconComponent } from '../ui/icon/icon.component';
 import { RouterLink } from '@angular/router';
 import { ModalComponent, ModalSize } from '../ui/modal/modal.component';
 import { ConfirmationDialogComponent } from '../ui/confirmation-dialog/confirmation-dialog.component';
+import { TooltipDirective } from '../../core/directives/tooltip.directive';
 
 @Component({
   selector: 'app-design',
@@ -17,7 +18,8 @@ import { ConfirmationDialogComponent } from '../ui/confirmation-dialog/confirmat
     IconComponent, 
     RouterLink,
     ModalComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    TooltipDirective
   ],
   templateUrl: './design.component.html'
 })

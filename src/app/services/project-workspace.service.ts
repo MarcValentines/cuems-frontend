@@ -1,4 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { RouteReuseStrategy } from '@angular/router';
+import { Router } from '@angular/router';
+import { CustomRouteReuseStrategy } from '../core/route-reuse.strategy';
+import { ProjectEditStateService } from './projects/project-edit-state.service';
 
 export interface OpenProject {
   uuid: string;
@@ -10,6 +14,9 @@ export interface OpenProject {
 @Injectable({ providedIn: 'root' })
 export class ProjectWorkspaceService {
   private projects = signal<OpenProject[]>([]);
+  private strategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
+  private router = inject(Router);
+  private editStateService = inject(ProjectEditStateService);
 
   editProjects = computed(() => this.projects().filter(p => p.mode === 'edit'));
   showProject = computed(() => this.projects().find(p => p.mode === 'show') ?? null);
@@ -44,7 +51,12 @@ export class ProjectWorkspaceService {
   }
 
   closeEdit(uuid: string): void {
+    this.strategy.clearProjectRoutes(uuid);
+    this.editStateService.clearProjectData(uuid);
     this.projects.update(list => list.filter(p => !(p.uuid === uuid && p.mode === 'edit')));
+    if (this.router.url.includes(`/projects/${uuid}/edit`)) {
+      this.router.navigate(['/projects']);
+    }
   }
 
   closeShow(): void {

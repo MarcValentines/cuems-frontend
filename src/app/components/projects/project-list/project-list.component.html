@@ -100,10 +100,35 @@
                 <a *ngIf="!isProjectBeingDeleted(project.uuid)" [routerLink]="['/projects', project.uuid]" (click)="$event.stopPropagation()" class="mr-4">
                   {{ 'project.list.view' | translate }}<span class="sr-only">, {{ project.name }}</span>
                 </a>
-                <button (click)="$event.stopPropagation(); deleteProject(project.uuid)" class="text-tertiary hover:text-tertiary-light" [disabled]="isProjectBeingDeleted(project.uuid) || isBulkDeleting">
-                  <span *ngIf="isProjectBeingDeleted(project.uuid)" class="loading loading-spinner loading-xs mr-1"></span>
-                  {{ 'project.list.delete' | translate }}<span class="sr-only">, {{ project.name }}</span>
-                </button>
+
+                <button 
+                type="button" 
+                [cdkMenuTriggerFor]="actionsMenu"
+                [cdkMenuPosition]="[{ originX: 'end', overlayX: 'end', originY: 'bottom', overlayY: 'top', offsetY: 4 }]"
+                (click)="$event.stopPropagation()"
+                class="cursor-pointer">
+                  <app-icon icon="down" class="w-[12px] h-[12px] transform translate-y-[2px]" />
+              </button>
+              
+              <ng-template #actionsMenu>
+                <div cdkMenu class="bg-dark-200 border border-gray-300 rounded-lg p-1 min-w-[160px] shadow-xl">
+                  <button 
+                    cdkMenuItem 
+                    (cdkMenuItemTriggered)="duplicateProject(project.uuid)"
+                    class="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-dark-300 rounded transition-colors cursor-pointer">
+                    {{ 'project.list.duplicate' | translate }}
+                  </button>
+                  <button 
+                    cdkMenuItem 
+                    (cdkMenuItemTriggered)="deleteProject(project.uuid)"
+                    [disabled]="isProjectBeingDeleted(project.uuid) || isBulkDeleting"
+                    class="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-dark-300 rounded transition-colors text-tertiary hover:text-tertiary-light cursor-pointer">
+                    <span *ngIf="isProjectBeingDeleted(project.uuid)" class="loading loading-spinner loading-xs"></span>
+                    {{ 'project.list.delete' | translate }}
+                    <span class="sr-only">, {{ project.name }}</span>
+                  </button>
+                </div>
+              </ng-template>                
               </td>
             </tr>
           </tbody>

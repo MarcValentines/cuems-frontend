@@ -17,6 +17,8 @@ import { Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { filter } from 'rxjs/operators';
 import { ProjectWorkspaceService } from '../../../../services/project-workspace.service';
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
+import { ConfirmationDialogComponent } from '../../../ui/confirmation-dialog/confirmation-dialog.component';
 
 interface CueData {
   id: string | number;
@@ -57,7 +59,11 @@ interface CueData {
     TranslateModule,
     TimecodeMaskDirective,
     MultiselectComponent,
-    ActivityDrawerComponent
+    ActivityDrawerComponent,
+    CdkMenu,
+    CdkMenuItem,
+    CdkMenuTrigger,
+    ConfirmationDialogComponent
   ],
   templateUrl: './sequence.component.html',
   styleUrl: './sequence.component.css'
@@ -72,7 +78,8 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   public drawerService = inject(DrawerService);
   private subscription = new Subscription();
   workspace = inject(ProjectWorkspaceService);
-
+  isConfirmDeleteOpen = false;
+  cueToDeleteIndex: number | null = null;
   readonly DRAWER_WIDTH = 500; // px
 
   projectUuid: string | null = null;
@@ -594,30 +601,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     this.cues[index].expanded = false;
   }
 
-  deleteCue(index: number) {
-    const confirmMessage = this.translateService.instant('delete.cue');
-
-    if (confirm(confirmMessage)) {
-      const deletedCueId = String(this.cues[index].id);
-
-      this.cues.splice(index, 1);
-
-      // Nullify action_target if it pointed to the deleted cue
-      this.cues.forEach(cue => {
-        if (cue.type === 'action' && cue.action_target === deletedCueId) {
-          cue.action_target = null;
-        }
-      });      
-      
-      // Reorder the numbers of order
-      this.cues.forEach((cue, i) => {
-        cue.order = i + 1;
-      });
-
-      this.checkForChanges();
-    }
-  }
-
   addCue(type: 'action' | 'audio' | 'video' | 'dmx') {
     const defaultNames = {
       action: this.translateService.instant('new.action'),
@@ -627,7 +610,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     };
 
     const newCue: CueData = {
-      id: this.cues.length + 1,
+      id: this.generateUUID(),
       order: this.cues.length + 1, // Added at the end
       name: defaultNames[type],
       type: type,
@@ -734,6 +717,42 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.scrollToNewCue(newCueIndex);
     }, 100);
+  }
+
+  duplicateCue(index: number): void {
+    const original = this.cues[index];
+    
+    const duplicate: CueData = {
+      ...JSON.parse(JSON.stringify(original)),
+      id: this.generateUUID(),
+      name: this.getCopyName(original.name),
+      expanded: false,
+    };
+  
+    this.cues.splice(index + 1, 0, duplicate); // insert just below
+  
+    this.cues.forEach((cue, i) => {
+      cue.order = i + 1;
+    });
+  
+    this.checkForChanges();
+  
+    setTimeout(() => {
+      this.scrollToNewCue(index + 1);
+    }, 100);
+  }
+
+  private getCopyName(originalName: string): string {
+    const base = originalName.replace(/\s-\sCopy(\s\(\d+\))?$/, '');
+    const copies = this.cues.map(c => c.name).filter(n =>
+      n === `${base} - Copy` || n.match(new RegExp(`^${base} - Copy \\((\\d+)\\)$`))
+    );
+    if (copies.length === 0) return `${base} - Copy`;
+    const max = copies.reduce((acc, n) => {
+      const match = n.match(/\((\d+)\)$/);
+      return Math.max(acc, match ? parseInt(match[1]) : 1);
+    }, 1);
+    return `${base} - Copy (${max + 1})`;
   }
 
   /**
@@ -1424,10 +1443,14 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   
   onDmxChannelValueChange(cue: CueData, index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const newValue = parseInt(input.value);
-    
+    let newValue = parseInt(input.value, 10);
+  
+    if (isNaN(newValue)) return;
+  
+    newValue = Math.min(255, Math.max(0, newValue));
+    input.value = String(newValue);
+  
     if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
-    
     cue.dmx_channels[index].value = newValue;
     this.checkForChanges();
   }
@@ -1522,4 +1545,40 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  openDeleteConfirmation(index: number): void {
+    this.isConfirmDeleteOpen = true;
+    this.cueToDeleteIndex = index;
+  }
+
+  closeDeleteConfirmation(): void {
+    this.isConfirmDeleteOpen = false;
+    this.cueToDeleteIndex = null;
+  }
+
+  confirmDelete(): void {
+    if (this.cueToDeleteIndex !== null) {
+      this.deleteCue(this.cueToDeleteIndex);
+    }
+    this.closeDeleteConfirmation();
+  }
+
+  private deleteCue(index: number) {
+    const deletedCueId = String(this.cues[index].id);
+
+    this.cues.splice(index, 1);
+
+    // Nullify action_target if it pointed to the deleted cue
+    this.cues.forEach(cue => {
+      if (cue.type === 'action' && cue.action_target === deletedCueId) {
+        cue.action_target = null;
+      }
+    });      
+      
+    // Reorder the numbers of order
+    this.cues.forEach((cue, i) => {
+      cue.order = i + 1;
+    });
+
+    this.checkForChanges();
+  }  
 }
