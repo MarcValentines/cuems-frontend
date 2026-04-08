@@ -72,6 +72,8 @@
     "project.button.effects": "Effects",
     "project.unsaved.changes": "Unsaved changes",
     "project.edit": "Edit",
+    "project.export": "Export",
+    "project.import": "Import",
     "project.show": "Show",
     "project.edit.editing": "Editing project",
     "project.edit.save.changes": "Save changes",

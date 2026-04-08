@@ -27,8 +27,14 @@
         </a>
       </div>
     </div>
-    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-      <button type="button" (click)="createNewProject()" class="btn btn-primary btn-normal">{{ 'project.list.new.project' | translate }}</button>
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex gap-3">
+      <button type="button" (click)="createNewProject()" class="btn btn-primary btn-normal">
+        {{ 'project.list.new.project' | translate }}
+      </button>
+        <!-- Botón de importar -->
+      <button type="button" (click)="openImportDialog()" class="btn btn-secondary btn-normal">
+        {{'project.import' | translate}}
+      </button>
     </div>
   </div>
 
@@ -78,6 +84,16 @@
               <td class="px-3 py-4 text-sm whitespace-nowrap">{{ project.created | date:'medium' }}</td>
               <td class="px-3 py-4 text-sm whitespace-nowrap">{{ project.modified | date:'medium' }}</td>
               <td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
+                <!-- Botón Export con spinner cuando está exportando -->
+                <button *ngIf="!isProjectBeingDeleted(project.uuid)"
+                  (click)="$event.stopPropagation(); exportProject(project.uuid)"
+                  class="mr-4 text-primary hover:text-primary-light"
+                  [disabled]="isProjectExporting(project.uuid)">
+                  <span *ngIf="isProjectExporting(project.uuid)"
+                    class="loading loading-spinner loading-xs mr-1"></span>
+                    {{ 'project.export' | translate }}
+                </button>
+
                 <a *ngIf="!isProjectBeingDeleted(project.uuid)" [routerLink]="['/projects', project.uuid, 'edit']" (click)="$event.stopPropagation()" class="mr-4">
                   {{ 'project.list.edit' | translate }}<span class="sr-only">, {{ project.name }}</span>
                 </a>
@@ -150,4 +166,5 @@
   (confirm)="confirmBulkDelete()"
 ></app-confirmation-dialog>
 
+<input #importFileInput type="file" accept=".zip" hidden (change)="onFileSelected($event)">
 

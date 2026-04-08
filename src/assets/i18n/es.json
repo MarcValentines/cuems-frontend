@@ -93,6 +93,8 @@
     "project.cue.empty": "No hay cues creadas",
     "project.cue.empty.description": "Clica en Audio, Video, DMX o Acción para crear tu primera cue",
     "project.edit": "Editar",
+    "project.export": "Exportar",
+    "project.import": "Importar",
     "project.show": "Show",
     "project.edit.editing": "Editando proyecto",
     "project.edit.save.changes": "Guardar cambios",

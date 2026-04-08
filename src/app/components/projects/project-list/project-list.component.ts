@@ -1,4 +1,4 @@
-import { Component, inject, DestroyRef, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, DestroyRef, effect, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AppPageHeaderComponent } from '../../layout/app-page-header/app-page-header.component';
@@ -6,6 +6,8 @@ import { ProjectsService, ProjectList } from '../../../services/projects/project
 import { ConfirmationDialogComponent } from '../../ui/confirmation-dialog/confirmation-dialog.component';
 import { Subscription } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
+import { ImportService, UploadParams } from '../../../services/media/import.service';
+import { ExportService, ExportParams } from '../../../services/media/export.service';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { IconComponent } from '../../ui/icon/icon.component';
 
@@ -16,6 +18,13 @@ import { IconComponent } from '../../ui/icon/icon.component';
   templateUrl: './project-list.component.html'
 })
 export class ProjectListComponent implements OnInit, OnDestroy {
+  private importService = inject(ImportService); //import service
+  private exportService = inject(ExportService);
+  exportMessages = new Map<string, string>(); //trackear exportaciones
+  exportingProjects = new Set<string>(); // Para trackear qué proyectos se están exportando
+
+  isUploadingToProject: string | null = null;
+
   public projectsService = inject(ProjectsService);
   private destroyRef = inject(DestroyRef);
   private router = inject(Router);
@@ -30,6 +39,9 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   isBulkDeleting = false;
 
   private deletingProjects = new Map<string, boolean>();
+
+  @ViewChild('importFileInput') importFileInput!: ElementRef<HTMLInputElement>;
+
 
   constructor() {
     this.refreshProjects();
@@ -55,6 +67,23 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
           this.isBulkDeleting = false;
         }
+      })
+    );
+    this.setupExportSubscriptions();
+
+  }
+
+  private setupExportSubscriptions(): void {
+    // Suscribirse a eventos del ExportService
+    this.subscription.add(
+      this.exportService.exportComplete.subscribe(event => {
+        // Manejar exportación completada
+      })
+    );
+
+    this.subscription.add(
+      this.exportService.exportError.subscribe(event => {
+        // Manejar error de exportación
       })
     );
   }
@@ -120,7 +149,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
       if (this.selectedProjects.includes(this.projectToDeleteUuid)) {
         this.selectedProjects = this.selectedProjects.filter(uuid => uuid !== this.projectToDeleteUuid);
-  }
+      }
 
       this.executeProjectDeletion(this.projectToDeleteUuid);
       this.closeDeleteConfirmation();
@@ -247,5 +276,89 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     return text.length > maxLength
       ? text.substring(0, maxLength) + '...'
       : text;
+  }
+  //métodos para el import
+  // Método para abrir el selector de archivos
+  openImportDialog(): void {
+    this.importFileInput.nativeElement.click();
+  }
+
+  // Método para manejar la selección de archivo
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      // Verificar que sea un archivo .zip
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        alert('Solo se pueden importar archivos .zip');
+        return;
+      }
+
+      // Confirmar antes de importar
+      if (confirm(`¿Importar proyecto "${file.name}"?`)) {
+        this.importProject(file);
+      }
+
+      // Limpiar el input
+      input.value = '';
+    }
+  }
+
+  // Método para importar el proyecto
+  importProject(file: File): void {
+    console.log('Importando proyecto:', file.name);
+
+    const uploadParams: UploadParams = {
+      file: file,
+      chunksize: 1024 * 1024, // 1MB chunks
+      onSuccess: (fileUuid: string) => {
+        console.log('Proyecto importado con UUID:', fileUuid);
+        // Recargar la lista después de un tiempo
+        setTimeout(() => {
+          this.refreshProjects();
+        }, 2000);
+      },
+      onError: (error: any) => {
+        console.error('Error al importar:', error);
+        alert('Error al importar proyecto: ' + error);
+      }
+    };
+
+    this.importService.uploadFile(uploadParams);
+  }
+
+  importToProject(projectUuid: string): void {
+    if (this.isProjectBeingDeleted(projectUuid)) {
+      return;
+    }
+
+    this.isUploadingToProject = projectUuid;
+    this.importFileInput.nativeElement.click();
+  }
+
+  // Métodos para exportar
+  exportProject(projectUuid: string): void {
+    // Lógica de exportación usando ExportService
+    const params: ExportParams = {
+      projectUuid: projectUuid,
+      format: 'zip',
+      onSuccess: (fileUrl) => { /* callback éxito */ },
+      onError: (error) => { /* callback error */ }
+    };
+
+    this.exportService.exportProject(params); // <-- OBLIGATORIO
+  }
+
+  private getProjectByUuid(uuid: string): ProjectList | undefined {
+    return this.projectsService.projects().find(p => p.uuid === uuid);
+  }
+
+  isProjectExporting(uuid: string): boolean {
+    return this.exportingProjects.has(uuid);
+  }
+
+  getExportMessage(uuid: string): string {
+    return this.exportMessages.get(uuid) || '';
   }
 }
