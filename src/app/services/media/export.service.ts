@@ -2,134 +2,73 @@ import { Injectable, inject } from '@angular/core';
 import { WebsocketService } from '../websocket.service';
 import { Subject } from 'rxjs';
 
-export interface ExportParams {
-  projectUuid: string;
-  format?: 'zip' | 'tar' | 'tar.gz';
-  onSuccess?: (fileUrl: string) => void;
-  onError?: (error: string) => void;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
   private webSocketService = inject(WebsocketService);
+  public exportComplete = new Subject<string>(); // fileUrl
+  public exportError = new Subject<string>();
 
-  // Subjects para eventos de exportación
-  public exportComplete = new Subject<{ projectUuid: string; fileUrl: string }>();
-  public exportError = new Subject<{ projectUuid: string; error: string }>();
+  private exportInProgress = false;
 
-  /**
-   * Exporta un proyecto - versión adaptativa
-   */
-  exportProject(params: ExportParams): void {
-    console.log('ExportService: Exporting project:', params.projectUuid);
+  exportProject(projectUuid: string): void {
+    if (this.exportInProgress) {
+      console.warn('Ya hay un export en curso');
+      return;
+    }
+
+    this.exportInProgress = true;
 
     const message = {
-      "action": 'project_export',
-      "value": params.projectUuid,
+      action: 'project_export',
+      value: projectUuid,
     };
 
-    // Intentar diferentes métodos para enviar mensajes
     this.sendMessageToWebSocket(message);
   }
 
-  /**
-   * Intenta enviar mensaje usando diferentes métodos del WebSocketService
-   */
   private sendMessageToWebSocket(message: any): void {
-
-    /* DEBUG: Ver qué tiene realmente el WebSocketService
-    console.log('DEBUG WebSocketService:', this.webSocketService);
-    console.log('DEBUG métodos disponibles:',
-      Object.getOwnPropertyNames(Object.getPrototypeOf(this.webSocketService))
-    );
-    console.log('DEBUG propiedades:', Object.keys(this.webSocketService));
-    */
-
-    // Intentar diferentes métodos comunes
     if (typeof (this.webSocketService as any).wsEmit === 'function') {
       (this.webSocketService as any).wsEmit(message);
     } else {
-      console.error('ExportService: No se encontró método para enviar mensajes al WebSocket');
       throw new Error('WebSocketService no tiene método para enviar mensajes');
     }
   }
 
-  /**
-   * Procesa una respuesta del servidor (debe ser llamado desde donde se reciban las respuestas)
-   */
-  public processServerResponse(message: any): void {
-    console.log('ExportService: Processing message:', message);
-
-    // Verificar si es una respuesta de exportación
-    if (!message || typeof message !== 'object') {
-      return;
-    }
+  processServerResponse(message: any): void {
+    if (!message || typeof message !== 'object') return;
 
     if (message.type === 'project_export') {
-      const projectUuid = this.extractProjectUuid(message);
+      const fileUrl = this.extractFileUrl(message);
 
-      if (!projectUuid) {
-        console.warn('ExportService: Could not extract project UUID from message:', message);
+      if (!fileUrl) {
+        this.exportError.next('No se recibió URL');
+        this.exportInProgress = false;
         return;
       }
 
-      if (message.error) {
-        // Error del servidor
-        console.error('ExportService: Server error:', message.error);
-        this.exportError.next({
-          projectUuid,
-          error: message.error
-        });
-      }
-      else if (message.value && (message.value.fileUrl || message.value.url || typeof message.value === 'string')) {
-        // Éxito: URL del archivo
-        const fileUrl = this.extractFileUrl(message);
-        console.log('ExportService: Export successful, file URL:', fileUrl);
+      // emitir evento
+      this.exportComplete.next(fileUrl);
 
-        this.exportComplete.next({
-          projectUuid,
-          fileUrl
-        });
-      }
+      // descargar
+      this.downloadFile(fileUrl);
+
+      this.exportInProgress = false;
     }
   }
 
-  /**
-   * Extrae el UUID del proyecto del mensaje
-   */
-  private extractProjectUuid(message: any): string {
-    // Intentar diferentes ubicaciones posibles
-    return message.projectUuid ||
-           (message.value && (message.value.projectUuid || message.value.uuid)) ||
-           (message.request && message.request.value) ||
-           (message.originalMessage && message.originalMessage.value);
-  }
-
-  /**
-   * Extrae la URL del archivo del mensaje
-   */
   private extractFileUrl(message: any): string {
-    if (typeof message.value === 'string') {
-      return message.value; // Si value es directamente la URL
-    }
-    return message.value?.fileUrl || message.value?.url || message.fileUrl || message.url;
+    if (typeof message.value === 'string') return message.value;
+    return message.value?.fileUrl || message.value?.url;
   }
 
-  /**
-   * Descarga el archivo exportado
-   */
-  downloadExportedFile(fileUrl: string, fileName: string = 'exported_project.zip'): void {
-    console.log('ExportService: Downloading file from:', fileUrl);
-
-    // Crear enlace temporal para descarga
+  private downloadFile(fileUrl: string): void {
     const link = document.createElement('a');
     link.href = fileUrl;
-    link.download = fileName;
+    link.download = 'project.zip';
     link.target = '_blank';
 
-    // Simular click para iniciar descarga
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

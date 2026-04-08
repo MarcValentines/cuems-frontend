@@ -88,8 +88,8 @@
                 <button *ngIf="!isProjectBeingDeleted(project.uuid)"
                   (click)="$event.stopPropagation(); exportProject(project.uuid)"
                   class="mr-4 text-primary hover:text-primary-light"
-                  [disabled]="isProjectExporting(project.uuid)">
-                  <span *ngIf="isProjectExporting(project.uuid)"
+                  [disabled]="isExporting">
+                  <span *ngIf="isExporting"
                     class="loading loading-spinner loading-xs mr-1"></span>
                     {{ 'project.export' | translate }}
                 </button>
