@@ -14,8 +14,9 @@ export class ExportService {
 
   exportProject(projectUuid: string): void {
     if (this.exportInProgress) {
-      console.warn('Ya hay un export en curso');
-      return;
+      console.warn('Ya hay un export en curso, cancelando anterior intento');
+      // Opcional: reset para forzar nuevo export
+      this.exportInProgress = false;
     }
 
     this.exportInProgress = true;
@@ -26,6 +27,15 @@ export class ExportService {
     };
 
     this.sendMessageToWebSocket(message);
+
+    // Timeout de seguridad: si no llega respuesta en 10s, liberar bandera
+    setTimeout(() => {
+      if (this.exportInProgress) {
+        console.warn('Export timed out, liberando exportInProgress');
+        this.exportInProgress = false;
+        this.exportError.next('Timeout exportación');
+      }
+    }, 30000);
   }
 
   private sendMessageToWebSocket(message: any): void {
@@ -44,16 +54,12 @@ export class ExportService {
 
       if (!fileUrl) {
         this.exportError.next('No se recibió URL');
-        this.exportInProgress = false;
-        return;
+      } else {
+        this.exportComplete.next(fileUrl);
+        this.downloadFile(fileUrl);
       }
 
-      // emitir evento
-      this.exportComplete.next(fileUrl);
-
-      // descargar
-      this.downloadFile(fileUrl);
-
+      // Liberar bandera siempre
       this.exportInProgress = false;
     }
   }
