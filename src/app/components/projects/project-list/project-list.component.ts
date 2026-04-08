@@ -7,7 +7,7 @@ import { ConfirmationDialogComponent } from '../../ui/confirmation-dialog/confir
 import { Subscription } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImportService, UploadParams } from '../../../services/media/import.service';
-import { ExportService, ExportParams } from '../../../services/media/export.service';
+import { ExportService } from '../../../services/media/export.service';
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { IconComponent } from '../../ui/icon/icon.component';
 
@@ -20,8 +20,6 @@ import { IconComponent } from '../../ui/icon/icon.component';
 export class ProjectListComponent implements OnInit, OnDestroy {
   private importService = inject(ImportService); //import service
   private exportService = inject(ExportService);
-  exportMessages = new Map<string, string>(); //trackear exportaciones
-  exportingProjects = new Set<string>(); // Para trackear qué proyectos se están exportando
 
   isUploadingToProject: string | null = null;
 
@@ -37,6 +35,8 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   isConfirmDeleteOpen = false;
   isConfirmBulkDeleteOpen = false;
   isBulkDeleting = false;
+
+  isExporting = false;
 
   private deletingProjects = new Map<string, boolean>();
 
@@ -74,16 +74,17 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   }
 
   private setupExportSubscriptions(): void {
-    // Suscribirse a eventos del ExportService
     this.subscription.add(
-      this.exportService.exportComplete.subscribe(event => {
-        // Manejar exportación completada
+      this.exportService.exportComplete.subscribe(fileUrl => {
+        console.log('Export OK:', fileUrl);
+        this.isExporting = false;
       })
     );
 
     this.subscription.add(
-      this.exportService.exportError.subscribe(event => {
-        // Manejar error de exportación
+      this.exportService.exportError.subscribe(error => {
+        console.error('Export ERROR:', error);
+        this.isExporting = false;
       })
     );
   }
@@ -339,26 +340,13 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   // Métodos para exportar
   exportProject(projectUuid: string): void {
-    // Lógica de exportación usando ExportService
-    const params: ExportParams = {
-      projectUuid: projectUuid,
-      format: 'zip',
-      onSuccess: (fileUrl) => { /* callback éxito */ },
-      onError: (error) => { /* callback error */ }
-    };
+    if (this.isExporting) return;
 
-    this.exportService.exportProject(params); // <-- OBLIGATORIO
+    this.isExporting = true;
+    this.exportService.exportProject(projectUuid);
   }
 
   private getProjectByUuid(uuid: string): ProjectList | undefined {
     return this.projectsService.projects().find(p => p.uuid === uuid);
-  }
-
-  isProjectExporting(uuid: string): boolean {
-    return this.exportingProjects.has(uuid);
-  }
-
-  getExportMessage(uuid: string): string {
-    return this.exportMessages.get(uuid) || '';
   }
 }
