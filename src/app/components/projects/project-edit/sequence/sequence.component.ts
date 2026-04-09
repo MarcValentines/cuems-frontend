@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, effect, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,8 +11,8 @@ import { MediaService } from '../../../../services/media/media.service';
 import { IconComponent } from '../../../ui/icon/icon.component';
 import { MultiselectComponent } from '../../../ui/multiselect/multiselect.component';
 import { ActivityDrawerComponent } from '../../../ui/activity-drawer/activity-drawer.component';
+import { TimecodeInputComponent } from '../../../ui/timecode-input/timecode-input.component';
 import { DrawerService } from '../../../../services/ui/drawer.service';
-import { TimecodeMaskDirective } from '../../../../core/directives';
 import { Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { filter } from 'rxjs/operators';
@@ -59,13 +59,13 @@ interface CueData {
     DragDropModule,
     IconComponent,
     TranslateModule,
-    TimecodeMaskDirective,
     MultiselectComponent,
     ActivityDrawerComponent,
     CdkMenu,
     CdkMenuItem,
     CdkMenuTrigger,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    TimecodeInputComponent
   ],
   templateUrl: './sequence.component.html',
   styleUrl: './sequence.component.css'
@@ -102,10 +102,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     { value: 'go', label: 'Auto continue', icon: 'post_go_go' },
     { value: 'go_at_end', label: 'Auto follow', icon: 'post_go_go_at_end' }
   ];
-
-  // Inline editing
-  editingPrewait: number | null = null;
-  editingPostwait: number | null = null;
 
   ngOnInit() {
     this.route.parent?.params.subscribe(params => {
@@ -1191,49 +1187,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   getActionTypeLabel(value: string): string {
     const found = this.actionTypeOptions.find(opt => opt.value === value);
     return found ? found.label : '';
-  }
-
-  /**
-   * Starts inline editing of prewait
-   */
-  startEditPrewait(index: number, event: Event): void {
-    event.stopPropagation();
-    this.editingPrewait = index;
-  }
-
-  /**
-   * Starts inline editing of postwait
-   */
-  startEditPostwait(index: number, event: Event): void {
-    event.stopPropagation();
-    this.editingPostwait = index;
-  }
-
-  /**
-   * Finishes inline editing
-   */
-  finishEdit(): void {
-    this.editingPrewait = null;
-    this.editingPostwait = null;
-    this.checkForChanges();
-  }
-
-  /**
-   * Close the inlineediting when clicking outside
-   */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    // Only close if there is some editing active
-    if (this.editingPrewait !== null || this.editingPostwait !== null) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('input[type="text"]')) {
-        this.finishEdit();
-      }
-    }
-  }
-
-  onInputClick(event: Event): void {
-    event.stopPropagation();
   }
 
   public reloadCuesFromProject(): void {

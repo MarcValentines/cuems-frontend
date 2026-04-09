@@ -114,22 +114,11 @@
                 </td>
                     
                     <td class="px-4 py-1 text-sm">
-                      <div *ngIf="editingPrewait !== i; else prewaitInput" 
-                           class="cursor-pointer hover:bg-dark-300 px-2 py-1 rounded transition-colors inline-block"
-                           (click)="startEditPrewait(i, $event)">
-                        {{ cue.prewait }}
-                      </div>
-                      <ng-template #prewaitInput>
-                        <input 
-                          type="text" 
-                          class="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                          style="width: 100px;"
-                          [(ngModel)]="cue.prewait"
-                          (click)="onInputClick($event)"
-                          placeholder="00:00:00.000"
-                          appTimecodeMask
-                          autofocus>
-                      </ng-template>
+                      <app-timecode-input
+                        variant="inline"
+                        [(value)]="cue.prewait"
+                        (valueChange)="checkForChanges()">
+                      </app-timecode-input>
                     </td>
                     
                     <td class="px-4 py-1 text-sm">
@@ -137,22 +126,11 @@
                     </td>
   
                     <td class="px-4 py-1 text-sm">
-                      <div *ngIf="editingPostwait !== i; else postwaitInput" 
-                           class="cursor-pointer hover:bg-dark-300 px-2 py-1 rounded transition-colors inline-block"
-                           (click)="startEditPostwait(i, $event)">
-                        {{ cue.postwait }}
-                      </div>
-                      <ng-template #postwaitInput>
-                        <input 
-                          type="text" 
-                          class="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                          style="width: 100px;"
-                          [(ngModel)]="cue.postwait"
-                          (click)="onInputClick($event)"
-                          placeholder="00:00:00.000"
-                          appTimecodeMask
-                          autofocus>
-                      </ng-template>
+                      <app-timecode-input
+                        variant="inline"
+                        [(value)]="cue.postwait"
+                        (valueChange)="checkForChanges()">
+                      </app-timecode-input>
                     </td>
                     
                     <td class="px-4 py-1">
@@ -276,26 +254,20 @@
                             
                             <div class="field">
                               <label class="label">{{ 'project.cue-table.prewait' | translate }}</label>
-                              <input 
-                                type="text" 
-                                class="input"
-                                [(ngModel)]="cue.prewait"
-                                (ngModelChange)="checkForChanges()"
-                                placeholder="00:00:00.000"
-                                appTimecodeMask
-                                title="Formato: HH:MM:SS.mmm (ejemplo: 00:01:30.500)">
+                              <app-timecode-input
+                                variant="default"
+                                [(value)]="cue.prewait"
+                                (valueChange)="checkForChanges()">
+                              </app-timecode-input>
                             </div>
-                            
+
                             <div class="field">
                               <label class="label">{{ 'project.cue-table.postwait' | translate }}</label>
-                              <input 
-                                type="text" 
-                                class="input"
-                                [(ngModel)]="cue.postwait"
-                                (ngModelChange)="checkForChanges()"
-                                placeholder="00:00:00.000"
-                                appTimecodeMask
-                                title="Formato: HH:MM:SS.mmm (ejemplo: 00:01:30.500)">
+                              <app-timecode-input
+                                variant="default"
+                                [(value)]="cue.postwait"
+                                (valueChange)="checkForChanges()">
+                              </app-timecode-input>
                             </div>
                             
                             <div class="field">
@@ -310,7 +282,7 @@
                               </select>
                             </div>
   
-                            <div class="field" *ngIf="cue.type !== 'dmx'">
+                            <div class="field" *ngIf="cue.type !== 'dmx' && cue.type !== 'action'">
                               <label class="label">{{ 'loop.type' | translate }}</label>
                               <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-6 mt-3">
@@ -339,7 +311,7 @@
                               </div>
                             </div> 
                             
-                            <div *ngIf="cue.loop === 'loop' && cue.type !== 'dmx'" class="field">
+                            <div *ngIf="cue.loop === 'loop' && cue.type !== 'dmx' && cue.type !== 'action'" class="field">
                               <span class="label">{{ 'loop.number_times' | translate }}</span>
                               <input 
                                 type="number" 

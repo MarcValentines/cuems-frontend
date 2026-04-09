@@ -82,6 +82,15 @@ export class ProjectEditComponent implements OnInit, OnDestroy {
         //Actualizar los campos de edición
         this.editName = this.project.name;
         this.editDescription = this.project.description;
+        // Workaround: server returns stale CuemsScript.id and CuemsScript.name on duplicated projects.
+        // Patch both fields with root metadata to prevent save conflicts.
+        if (this.projectUuid && this.project.CuemsScript) {
+          this.project.CuemsScript.id = this.projectUuid;
+          if (this.project.name) {
+            this.project.CuemsScript.name = this.project.name;
+          }
+        }       
+
         if (this.projectUuid && this.project.name) {
           this.workspace.updateName(this.projectUuid, this.project.name);
         }
