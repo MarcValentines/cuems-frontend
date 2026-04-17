@@ -13,6 +13,8 @@ import { ProjectWorkspaceService } from './services/project-workspace.service';
 import { CustomRouteReuseStrategy } from './core/route-reuse.strategy';
 import { ConfirmationDialogComponent } from './components/ui/confirmation-dialog/confirmation-dialog.component';
 import { ProjectsService } from './services/projects/projects.service';
+import { PlayControlsFloatingComponent } from './components/ui/play-controls/play-controls-floating/play-controls-floating.component';
+import { OscService } from './services/osc.service';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +26,7 @@ import { ProjectsService } from './services/projects/projects.service';
     NotificationsComponent,
     ConfirmationDialogComponent,
     TranslateModule,
+    PlayControlsFloatingComponent,
   ],
   templateUrl: './app.component.html',
 })
@@ -34,6 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private strategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
   private router = inject(Router);
   private projectsService = inject(ProjectsService);
+  oscService = inject(OscService);
 
   constructor(
     private translate: TranslateService,
@@ -113,4 +117,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private updateHtmlLang(lang: string): void {
     document.documentElement.lang = lang;
   }
+
+  get showPlayControls(): boolean {
+    const showProject = this.workspace.showProject();
+    if (!showProject) return false;
+  
+    const url = this.router.url;
+    const isInShowSequence = url.includes('/sequence') && !url.includes('/edit/sequence');
+    return this.oscService.running() || isInShowSequence;
+  }  
 }

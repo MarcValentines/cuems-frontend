@@ -16,3 +16,7 @@
   cancelText="{{'projects.workspace.edit.confirm.text.cancel' | translate}}"
   (confirm)="onConfirmClose()"
   (close)="workspace.onCancelClose()" />
+
+  @if (showPlayControls) {
+    <app-play-controls-floating />
+  }

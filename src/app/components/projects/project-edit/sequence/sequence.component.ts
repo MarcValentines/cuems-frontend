@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, effect, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,8 +11,8 @@ import { MediaService } from '../../../../services/media/media.service';
 import { IconComponent } from '../../../ui/icon/icon.component';
 import { MultiselectComponent } from '../../../ui/multiselect/multiselect.component';
 import { ActivityDrawerComponent } from '../../../ui/activity-drawer/activity-drawer.component';
+import { TimecodeInputComponent } from '../../../ui/timecode-input/timecode-input.component';
 import { DrawerService } from '../../../../services/ui/drawer.service';
-import { TimecodeMaskDirective } from '../../../../core/directives';
 import { Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { filter } from 'rxjs/operators';
@@ -34,6 +34,7 @@ interface CueData {
   loop_times: number; // -1 for infinite, positive number for specific times
   notes: string;
   expanded: boolean;
+  enabled: boolean;
   activeTab: 'notes' | 'edit' | 'media';
   selectedMediaFile?: {uuid: string, file: any};
   selectedAudioOutput?: string;
@@ -57,13 +58,13 @@ interface CueData {
     DragDropModule,
     IconComponent,
     TranslateModule,
-    TimecodeMaskDirective,
     MultiselectComponent,
     ActivityDrawerComponent,
     CdkMenu,
     CdkMenuItem,
     CdkMenuTrigger,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    TimecodeInputComponent
   ],
   templateUrl: './sequence.component.html',
   styleUrl: './sequence.component.css'
@@ -100,10 +101,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     { value: 'go', label: 'Auto continue', icon: 'post_go_go' },
     { value: 'go_at_end', label: 'Auto follow', icon: 'post_go_go_at_end' }
   ];
-
-  // Inline editing
-  editingPrewait: number | null = null;
-  editingPostwait: number | null = null;
 
   ngOnInit() {
     this.route.parent?.params.subscribe(params => {
@@ -459,6 +456,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
         loop: this.determineLoopType(cueData.loop),
         loop_times: this.determineLoopTimes(cueData.loop),
         notes: cueData.description || '',
+        enabled: cueData.enabled === true || cueData.enabled === 'True',
         expanded: false,
         activeTab: 'notes' as 'notes' | 'edit' | 'media',
         selectedMediaFile,
@@ -550,12 +548,15 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
 
   public checkForChanges(): void {
-    this.hasUnsavedChanges = JSON.stringify(this.cues) !== JSON.stringify(this.originalCues);
+    const cuesForComparison = this.cues.map(({ expanded, activeTab, ...rest }) => rest);
+    const originalsForComparison = this.originalCues.map(({ expanded, activeTab, ...rest }) => rest);
+
+    this.hasUnsavedChanges = JSON.stringify(cuesForComparison) !== JSON.stringify(originalsForComparison);
 
     if (this.projectUuid) {
       this.editStateService.saveTemporaryCues(this.projectUuid, this.cues, this.hasUnsavedChanges);
     }
-
+  
     if (this.projectUuid) {
       if (this.hasUnsavedChanges) {
         const cueListData = this.prepareCueListForSaving();
@@ -622,6 +623,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       loop: 'loop',
       loop_times: 1,
       notes: '',
+      enabled: true,
       expanded: true,
       activeTab: 'edit' as 'notes' | 'edit' | 'media',
       selectedMediaFile: undefined,
@@ -900,6 +902,8 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     newCue.prewait = { CTimecode: this.ensureMilliseconds(cue.prewait) };
     newCue.postwait = { CTimecode: this.ensureMilliseconds(cue.postwait) };
 
+    newCue.enabled = cue.enabled ? 'True' : 'False';
+
     // Assign loop: -1 for infinite, positive number for specific times
     newCue.loop = cue.loop === 'inf' ? -1 : cue.loop_times;
 
@@ -1134,49 +1138,6 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   getActionTypeLabel(value: string): string {
     const found = this.actionTypeOptions.find(opt => opt.value === value);
     return found ? found.label : '';
-  }
-
-  /**
-   * Starts inline editing of prewait
-   */
-  startEditPrewait(index: number, event: Event): void {
-    event.stopPropagation();
-    this.editingPrewait = index;
-  }
-
-  /**
-   * Starts inline editing of postwait
-   */
-  startEditPostwait(index: number, event: Event): void {
-    event.stopPropagation();
-    this.editingPostwait = index;
-  }
-
-  /**
-   * Finishes inline editing
-   */
-  finishEdit(): void {
-    this.editingPrewait = null;
-    this.editingPostwait = null;
-    this.checkForChanges();
-  }
-
-  /**
-   * Close the inlineediting when clicking outside
-   */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    // Only close if there is some editing active
-    if (this.editingPrewait !== null || this.editingPostwait !== null) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('input[type="text"]')) {
-        this.finishEdit();
-      }
-    }
-  }
-
-  onInputClick(event: Event): void {
-    event.stopPropagation();
   }
 
   public reloadCuesFromProject(): void {
@@ -1420,24 +1381,52 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Handle the change of DMX channel number
+   * Handle live input of DMX channel number (update model only if valid)
    */
   onDmxChannelNumChange(cue: CueData, index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    let newChannel = parseInt(input.value, 10);
-    if (isNaN(newChannel) || newChannel < 1) newChannel = 1;
+    const raw = input.value.trim();
+
+    if (raw === '') return;
+
+    let newChannel = parseInt(raw, 10);
+    if (isNaN(newChannel)) return;
+
+    if (newChannel < 1) newChannel = 1;
     if (newChannel > 512) newChannel = 512;
-    
+
     if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
-    
+
+    if (this.isDmxChannelNumValid(cue, newChannel, index)) {
+      cue.dmx_channels[index].channel = newChannel;
+      this.checkForChanges();
+    }
+  }
+
+  /**
+   * Clamp and restore DMX channel number on blur
+   */
+  onDmxChannelNumBlur(cue: CueData, index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value.trim();
+
+    if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
+
+    if (raw === '' || isNaN(parseInt(raw, 10))) {
+      input.value = cue.dmx_channels[index].channel.toString();
+      return;
+    }
+
+    let newChannel = parseInt(raw, 10);
+    if (newChannel < 1) newChannel = 1;
+    if (newChannel > 512) newChannel = 512;
+
     if (this.isDmxChannelNumValid(cue, newChannel, index)) {
       cue.dmx_channels[index].channel = newChannel;
       input.value = String(newChannel);
       this.checkForChanges();
     } else {
-      setTimeout(() => {
-        input.value = cue.dmx_channels![index].channel.toString();
-      });
+      input.value = cue.dmx_channels[index].channel.toString();
     }
   }
   

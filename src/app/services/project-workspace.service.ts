@@ -3,6 +3,7 @@ import { RouteReuseStrategy } from '@angular/router';
 import { Router } from '@angular/router';
 import { CustomRouteReuseStrategy } from '../core/route-reuse.strategy';
 import { ProjectEditStateService } from './projects/project-edit-state.service';
+import { AudioMixerStateService } from './mixers/audio-mixer-state.service';
 
 export interface OpenProject {
   uuid: string;
@@ -17,6 +18,7 @@ export class ProjectWorkspaceService {
   private strategy = inject(RouteReuseStrategy) as CustomRouteReuseStrategy;
   private router = inject(Router);
   private editStateService = inject(ProjectEditStateService);
+  private audioMixerStateService = inject(AudioMixerStateService);
 
   editProjects = computed(() => this.projects().filter(p => p.mode === 'edit'));
   showProject = computed(() => this.projects().find(p => p.mode === 'show') ?? null);
@@ -61,6 +63,7 @@ export class ProjectWorkspaceService {
 
   closeShow(): void {
     this.projects.update(list => list.filter(p => p.mode !== 'show'));
+    this.audioMixerStateService.clear();
   }
 
   markDirty(uuid: string): void {

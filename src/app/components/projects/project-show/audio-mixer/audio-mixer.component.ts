@@ -6,6 +6,7 @@ import { IconComponent } from '../../../ui/icon/icon.component';
 import { ProjectsService } from '../../../../services/projects/projects.service';
 import { OscService } from '../../../../services/osc.service';
 import { Subscription } from 'rxjs';
+import { AudioMixerStateService } from '../../../../services/mixers/audio-mixer-state.service';
 
 @Component({
   selector: 'app-project-show-audio-mixer',
@@ -17,6 +18,7 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private projectsService = inject(ProjectsService);
   private oscService = inject(OscService);
+  private audioMixerStateService = inject(AudioMixerStateService);
   public project: any;
   public projectUuid: string | null = null;
   public audioCues: any[] = [];
@@ -100,7 +102,7 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
                   parentId: node.uuid,
                   id: `${node.uuid}_${outputWrapper.output.id ?? outputWrapper.output.name}`,
                   name: outputWrapper.output.name,
-                  volume: 100,
+                  volume: this.audioMixerStateService.getOutputVolume(`${node.uuid}_${outputWrapper.output.id ?? outputWrapper.output.name}`),
                   index: outputIndex
                 });
               });
@@ -110,7 +112,7 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
           return {
             index: nodeIndex,
             uuid: node.uuid,
-            volume: 100,
+            volume: this.audioMixerStateService.getNodeVolume(node.uuid),
             outputs: outputs
           };
         });
@@ -159,16 +161,16 @@ export class ProjectShowAudioMixerComponent implements OnInit, OnDestroy {
 
   public onMasterVolumeChange(node: any, sliderValue: number): void {
     node.volume = sliderValue;
+    this.audioMixerStateService.setNodeVolume(node.uuid, sliderValue);
     const floatVolume = this.sliderToFloat(sliderValue);
-    
     this.oscService.sendMasterVolumeUpdate(node.uuid, floatVolume);
   }
-
+  
   public onNodeVolumeChange(node: any, output: any, sliderValue: number): void {
     output.volume = sliderValue;
+    this.audioMixerStateService.setOutputVolume(output.id, sliderValue);
     const floatVolume = this.sliderToFloat(sliderValue);
-
     const channelIndex = output.index;
     this.oscService.sendNodeVolumeUpdate(node.uuid, channelIndex, floatVolume);
-  }
+  }  
 }

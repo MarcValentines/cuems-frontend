@@ -1,0 +1,32 @@
+<div
+  #container
+  tabindex="0"
+  class="outline-none"
+  [class]="variant() === 'inline' 
+    ? 'inline-flex items-center cursor-pointer hover:bg-dark-300 rounded transition-colors text-sm select-none'
+    : 'inline-flex items-center input select-none cursor-pointer'">
+
+  <span
+    (click)="selectSegment('hh', $event)"
+    [class.bg-primary]="activeSegment() === 'hh'"
+    [class.text-white]="activeSegment() === 'hh'"
+    class="rounded">{{ display().hh }}</span>
+  <span class="opacity-50">:</span>
+  <span
+    (click)="selectSegment('mm', $event)"
+    [class.bg-primary]="activeSegment() === 'mm'"
+    [class.text-white]="activeSegment() === 'mm'"
+    class="rounded">{{ display().mm }}</span>
+  <span class="opacity-50">:</span>
+  <span
+    (click)="selectSegment('ss', $event)"
+    [class.bg-primary]="activeSegment() === 'ss'"
+    [class.text-white]="activeSegment() === 'ss'"
+    class="rounded">{{ display().ss }}</span>
+  <span class="opacity-50">.</span>
+  <span
+    (click)="selectSegment('mmm', $event)"
+    [class.bg-primary]="activeSegment() === 'mmm'"
+    [class.text-white]="activeSegment() === 'mmm'"
+    class="rounded">{{ display().mmm }}</span>
+</div>

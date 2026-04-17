@@ -46,6 +46,9 @@ export class OscService {
 
   public cueNames = signal<Record<string, string>>({});
 
+  /** Map of cue UUID -> enabled state */
+  public cueEnabledStatuses = signal<Record<string, boolean>>({});
+
   constructor() {
     console.log('OscService initialized');
 
@@ -131,6 +134,16 @@ export class OscService {
   }
 
   private processOscMessage(msg: any): void {
+    if (msg.address.startsWith('/engine/status/cue_enabled/')) {
+      const uuid = msg.address.split('/engine/status/cue_enabled/')[1];
+      const enabled = Number(msg.args[0]) === 1;
+      this.cueEnabledStatuses.update(statuses => ({
+        ...statuses,
+        [uuid]: enabled
+      }));
+      return;
+    }
+
     if (msg.address.startsWith('/engine/status/cue/')) {
       const uuid = msg.address.split('/engine/status/cue/')[1];
       const status = Number(msg.args[0]);
@@ -139,7 +152,7 @@ export class OscService {
         [uuid]: status
       }));
       return;
-    }
+    }    
 
     switch (msg.address) {
       case '/engine/status/currentcue':
@@ -196,6 +209,10 @@ export class OscService {
     return this.nextCue() === uuid;
   }
 
+  public isCueEnabled(uuid: string): boolean {
+    return this.cueEnabledStatuses()[uuid] ?? true;
+  }
+
   /**
    * Convert timecode in milliseconds to HH:MM:SS string.
    * Negative ms is treated as 0; max display 99:59:59.
@@ -243,6 +260,16 @@ export class OscService {
     const binary = message.pack();
     this.ws.next(binary);
   }
+
+  /**
+   * Sets the enabled state of a cue
+   * @param cueUuid The UUID of the cue
+   * @param enabled True to enable, false to disable
+   */
+  public setCueEnabled(cueUuid: string, enabled: boolean): void {
+    const message = new OSC.Message('/engine/command/cue_enabled', `${cueUuid} ${enabled ? 1 : 0}`);
+    this.ws.next(message.pack());
+  }  
 
   /**
    * Audio Mixer
