@@ -84,7 +84,10 @@
               </thead>
               <tbody class="divide-y" cdkDropList (cdkDropListDropped)="onDrop($event)">
                 <ng-container *ngFor="let cue of cues; let i = index">
-                  <tr class="hover:bg-opacity-50" cdkDrag [attr.data-cue-index]="i">
+                  <tr class="hover:bg-opacity-50"
+                      [class.cue-disabled]="!cue.enabled"
+                      cdkDrag [attr.data-cue-index]="i"
+                  >
                     <td>
                       <app-icon 
                       *ngIf="shouldShowWarningIcon(cue)" 
@@ -321,6 +324,16 @@
                                 class="input w-20">
                             </div>                          
                           </div>
+
+                          <div class="flex items-center gap-2 mt-4">
+                            <input 
+                              type="checkbox" 
+                              [id]="'enabled_' + i"
+                              class="checkbox"
+                              [(ngModel)]="cue.enabled"
+                              (ngModelChange)="checkForChanges()">
+                            <label class="label-inline mt-2" [for]="'enabled_' + i">{{ 'cue.enabled' | translate }}</label>
+                          </div>                           
                           
                           <div class="flex justify-end gap-2 mt-4">
                             <button class="px-3 py-1 text-sm rounded" (click)="collapseRow(i)">{{ 'close' | translate }}</button>
@@ -412,10 +425,11 @@
                                       class="input w-full"
                                       [value]="channel.channel"
                                       (input)="onDmxChannelNumChange(cue, channelIndex, $event)"
+                                      (blur)="onDmxChannelNumBlur(cue, channelIndex, $event)"
                                       [class.border-red-500]="!isDmxChannelNumValid(cue, channel.channel, channelIndex)"
                                       min="1"
                                       max="512"
-                                      placeholder="1">
+                                      placeholder="">
                                     <div *ngIf="!isDmxChannelNumValid(cue, channel.channel, channelIndex)" 
                                          class="text-xs text-red-400 mt-1">
                                       {{ 'dmx.channel.duplicate.error' | translate }}
@@ -516,7 +530,7 @@
                             placeholder="Add notes for this cue..."
                             [(ngModel)]="cue.notes"
                             (ngModelChange)="checkForChanges()">
-                          </textarea>
+                          </textarea>                         
   
                           <div class="flex justify-end gap-2 mt-2">
                             <button class="px-3 py-1 text-sm rounded" (click)="collapseRow(i)">{{ 'close' | translate }}</button>

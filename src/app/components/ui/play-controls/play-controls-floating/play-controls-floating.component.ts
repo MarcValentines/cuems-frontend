@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, AfterViewInit, PLATFORM_ID, inject, ViewChild } from '@angular/core';
+import { Component, signal, OnInit, AfterViewInit, OnDestroy, PLATFORM_ID, inject, ViewChild } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CdkDrag, CdkDragHandle, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { PlayControlsPanelComponent } from '../play-controls-panel/play-controls-panel.component';
@@ -15,9 +15,8 @@ const PANEL_H = 300;
   imports: [CdkDrag, CdkDragHandle, PlayControlsPanelComponent, PlayControlsBarComponent, IconComponent],
   templateUrl: './play-controls-floating.component.html',
 })
-export class PlayControlsFloatingComponent implements OnInit, AfterViewInit {
+export class PlayControlsFloatingComponent implements OnInit, AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
-
   @ViewChild('dragRef') dragRef!: CdkDrag;
 
   collapsed = signal(false);
@@ -33,34 +32,29 @@ export class PlayControlsFloatingComponent implements OnInit, AfterViewInit {
         if (saved.x != null && saved.y != null) {
           this.savedPosition = { x: saved.x, y: saved.y };
         }
-      } catch {}
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     }
   }
 
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const pos = this.savedPosition ?? this.defaultPosition();
+    const pos = this.clampPosition(this.savedPosition ?? this.defaultPosition());
     setTimeout(() => {
       this.dragRef.setFreeDragPosition(pos);
     }, 0);
+    window.addEventListener('resize', this.onResize);
   }
 
-  private defaultPosition(): { x: number; y: number } {
-    const x = window.innerWidth - PANEL_W - 24;
-    const y = window.innerHeight - PANEL_H - 24;
-    return { x, y };
+  ngOnDestroy(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    window.removeEventListener('resize', this.onResize);
   }
 
   onDragEnded(event: CdkDragEnd): void {
     const pos = event.source.getFreeDragPosition();
-    const el = event.source.getRootElement();
-    const h = el.offsetHeight;
-  
-    const clamped = {
-      x: pos.x,
-      y: Math.max(8, Math.min(pos.y, window.innerHeight - h - 8)),
-    };
-  
+    const clamped = this.clampPosition(pos);
     event.source.setFreeDragPosition(clamped);
     this.savedPosition = clamped;
     this.save();
@@ -69,6 +63,25 @@ export class PlayControlsFloatingComponent implements OnInit, AfterViewInit {
   toggle(): void {
     this.collapsed.update(v => !v);
     this.save();
+  }
+
+  private defaultPosition(): { x: number; y: number } {
+    const x = window.innerWidth - PANEL_W - 24;
+    const y = window.innerHeight - PANEL_H - 24;
+    return { x, y };
+  }
+
+  private clampPosition(pos: { x: number; y: number }): { x: number; y: number } {
+    return {
+      x: Math.max(8, Math.min(pos.x, window.innerWidth - PANEL_W - 8)),
+      y: Math.max(8, Math.min(pos.y, window.innerHeight - PANEL_H - 8)),
+    };
+  }
+
+  private onResize = (): void => {
+    const base = this.savedPosition ?? this.defaultPosition();
+    const clamped = this.clampPosition(base);
+    this.dragRef.setFreeDragPosition(clamped);
   }
 
   private save(): void {

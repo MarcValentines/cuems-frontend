@@ -34,6 +34,7 @@ interface CueData {
   loop_times: number; // -1 for infinite, positive number for specific times
   notes: string;
   expanded: boolean;
+  enabled: boolean;
   activeTab: 'notes' | 'edit' | 'media';
   selectedMediaFile?: { uuid: string, file: any };
   selectedAudioOutput?: string;
@@ -466,6 +467,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
         loop: this.determineLoopType(cueData.loop),
         loop_times: this.determineLoopTimes(cueData.loop),
         notes: cueData.description || '',
+        enabled: cueData.enabled === true || cueData.enabled === 'True',
         expanded: false,
         activeTab: 'notes' as 'notes' | 'edit' | 'media',
         selectedMediaFile,
@@ -558,12 +560,15 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
 
   public checkForChanges(): void {
-    this.hasUnsavedChanges = JSON.stringify(this.cues) !== JSON.stringify(this.originalCues);
+    const cuesForComparison = this.cues.map(({ expanded, activeTab, ...rest }) => rest);
+    const originalsForComparison = this.originalCues.map(({ expanded, activeTab, ...rest }) => rest);
+
+    this.hasUnsavedChanges = JSON.stringify(cuesForComparison) !== JSON.stringify(originalsForComparison);
 
     if (this.projectUuid) {
       this.editStateService.saveTemporaryCues(this.projectUuid, this.cues, this.hasUnsavedChanges);
     }
-
+  
     if (this.projectUuid) {
       if (this.hasUnsavedChanges) {
         const cueListData = this.prepareCueListForSaving();
@@ -654,6 +659,7 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
       loop: 'loop',
       loop_times: 1,
       notes: '',
+      enabled: true,
       expanded: true,
       activeTab: 'edit' as 'notes' | 'edit' | 'media',
       selectedMediaFile: undefined,
@@ -938,6 +944,8 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
     newCue.offset = { CTimecode: this.ensureMilliseconds(cue.time) };
     newCue.prewait = { CTimecode: this.ensureMilliseconds(cue.prewait) };
     newCue.postwait = { CTimecode: this.ensureMilliseconds(cue.postwait) };
+
+    newCue.enabled = cue.enabled ? 'True' : 'False';
 
     // Assign loop: -1 for infinite, positive number for specific times
     newCue.loop = cue.loop === 'inf' ? -1 : cue.loop_times;
@@ -1493,25 +1501,52 @@ export class ProjectEditSequenceComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle the change of DMX channel number
+   * Handle live input of DMX channel number (update model only if valid)
    */
   onDmxChannelNumChange(cue: CueData, index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
+    const raw = input.value.trim();
 
-    let newChannel = parseInt(input.value, 10);
-    if (isNaN(newChannel) || newChannel < 1) newChannel = 1;
+    if (raw === '') return;
+
+    let newChannel = parseInt(raw, 10);
+    if (isNaN(newChannel)) return;
+
+    if (newChannel < 1) newChannel = 1;
     if (newChannel > 512) newChannel = 512;
 
     if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
 
     if (this.isDmxChannelNumValid(cue, newChannel, index)) {
       cue.dmx_channels[index].channel = newChannel;
+      this.checkForChanges();
+    }
+  }
+
+  /**
+   * Clamp and restore DMX channel number on blur
+   */
+  onDmxChannelNumBlur(cue: CueData, index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value.trim();
+
+    if (cue.type !== 'dmx' || !cue.dmx_channels || !cue.dmx_channels[index]) return;
+
+    if (raw === '' || isNaN(parseInt(raw, 10))) {
+      input.value = cue.dmx_channels[index].channel.toString();
+      return;
+    }
+
+    let newChannel = parseInt(raw, 10);
+    if (newChannel < 1) newChannel = 1;
+    if (newChannel > 512) newChannel = 512;
+
+    if (this.isDmxChannelNumValid(cue, newChannel, index)) {
+      cue.dmx_channels[index].channel = newChannel;
       input.value = String(newChannel);
       this.checkForChanges();
     } else {
-      setTimeout(() => {
-        input.value = cue.dmx_channels![index].channel.toString();
-      });
+      input.value = cue.dmx_channels[index].channel.toString();
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectsService } from '../../../../services/projects/projects.service';
@@ -7,12 +7,13 @@ import { ActivityDrawerComponent } from '../../../ui/activity-drawer/activity-dr
 import { DrawerService } from '../../../../services/ui/drawer.service';
 import { Subscription } from 'rxjs';
 import { OscService } from '../../../../services/osc.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-project-show-sequence',
   templateUrl: './sequence.component.html',
   standalone: true,
-  imports: [CommonModule, IconComponent, ActivityDrawerComponent]
+  imports: [CommonModule, IconComponent, ActivityDrawerComponent, TranslateModule]
 })
 export class ProjectShowSequenceComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
@@ -25,6 +26,46 @@ export class ProjectShowSequenceComponent implements OnInit, OnDestroy {
   public project: any;
   public projectUuid: string | null = null;
   private projectLoadedSubscription?: Subscription;
+
+  private el = inject(ElementRef);
+  private userScrolling = false;
+  private userScrollTimeout: any;
+  private scrollDebounce: any;
+
+  constructor() {
+    effect(() => {
+      const nextCueId = this.oscService.nextCue();
+      if (!nextCueId || this.userScrolling) return;
+  
+      clearTimeout(this.scrollDebounce);
+      this.scrollDebounce = setTimeout(() => {
+        const row = this.el.nativeElement.querySelector(`[data-cue-id="${nextCueId}"]`) as HTMLElement;
+        if (!row) return;
+      
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        
+        if (documentHeight <= windowHeight) return;
+      
+        const rowTop = row.getBoundingClientRect().top + window.scrollY;
+        const targetScroll = rowTop - (windowHeight / 3); // Top third of the row
+      
+        window.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: 'smooth'
+        });
+      }, 300);
+    });
+  }
+
+  @HostListener('window:wheel')
+  onUserScroll(): void {
+    this.userScrolling = true;
+    clearTimeout(this.userScrollTimeout);
+    this.userScrollTimeout = setTimeout(() => {
+      this.userScrolling = false;
+    }, 3000);
+  }  
 
   ngOnInit(): void {
     this.route.parent?.params.subscribe(params => {
@@ -65,10 +106,12 @@ export class ProjectShowSequenceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.scrollDebounce);
+    clearTimeout(this.userScrollTimeout);    
     if (this.projectLoadedSubscription) {
       this.projectLoadedSubscription.unsubscribe();
     }
-  }
+  } 
 
   getCueId(cueItem: any): string {
     if (cueItem.AudioCue) return cueItem.AudioCue.id;
@@ -171,5 +214,17 @@ export class ProjectShowSequenceComponent implements OnInit, OnDestroy {
   onClickSetNextCue(cueItem: any): void {
     const uuid = this.getCueId(cueItem);
     this.oscService.setNextCue(uuid);
-  }  
+  }
+  
+  isCueEnabled(cueItem: any): boolean {
+    const uuid = this.getCueId(cueItem);
+    return this.oscService.isCueEnabled(uuid);
+  }
+  
+  onToggleEnabled(cueItem: any, event: Event): void {
+    event.stopPropagation();
+    const uuid = this.getCueId(cueItem);
+    const newEnabled = !this.oscService.isCueEnabled(uuid);
+    this.oscService.setCueEnabled(uuid, newEnabled);
+  }
 }

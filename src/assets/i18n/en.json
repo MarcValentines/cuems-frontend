@@ -186,6 +186,7 @@
     "cue.notes": "Notes",
     "cue.edit": "Edit",
     "cue.media": "Media",
+    "cue.enabled": "Enabled",
     "time": "Time",
     "duration": "Duration",
     "prewait": "Pre-wait",
